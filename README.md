@@ -23,9 +23,7 @@ The system's primary function is to centralize and manage all core business oper
 - Human Resources (HRM)
 - System Administration (SYS)
 - 
-============================================================
 1.0 MASTER GOOGLE SHEET STRUCTURE
-============================================================
 
 We use **one Google Sheet only** named:
 ```
@@ -41,9 +39,7 @@ Tabs are grouped and named using prefixes:
 - DBUG_
 This keeps everything consistent and easy for Setup.js.
 
-============================================================
 2.0 TECHNOLOGY STACK
-============================================================
 
 The entire system is built on the Google Workspace platform, leveraging its integrated, serverless environment.
 - **BACKEND**: Google Apps Script (.js)
@@ -53,9 +49,7 @@ The entire system is built on the Google Workspace platform, leveraging its inte
 - **DATABASE**: Google Sheets
   o---|bA_Nijjara_ERPsys|---o One Google sheet acts as the full Database for the system, where each tab (e.g., `SYS_Users`) acts as a database table. This model provides a transparent and auditable data store.
   
-============================================================
 3.0 CORE ARCHITECTURE & LOGIC
-============================================================
 
 The system's core principle is a **Metadata-Driven UI**. The frontend is not static; it is dynamically built at runtime based on configurations defined in the `ENG_` sheets.
 
@@ -265,9 +259,7 @@ The system must generate Clean, Sequential, Readable IDs. Random UUIDs (e.g., `a
 * **User Experience:** User types "Ahmed" → System searches Name/Email/Phone in `HRM_Employees` → User selects "Ahmed Ali" → System captures `EMP_ID` hiddenly.
 ---
 
-================================================================================
  4.0  >>  GOOGLE SHEETS ERP SCHEMA (THE DATABASE)
-================================================================================
  
    Managed by Setup.js.
 [ 1. SYSTEM CORE (SYS) ]
@@ -312,9 +304,7 @@ The system must generate Clean, Sequential, Readable IDs. Random UUIDs (e.g., `a
     FIN_PandL_Statements: PL_ID, Rev_ID, DiEXP_ID, InDiEXP_TM_ID, InDiEXP_NT_ID, Total_Rev, Total_DiEXP, Total_InDiEXP_TM, Total_InDiEXP_NT, PL_Start_Date, PL_End_Date, ADV_Crt_At, ADV_Crt_By, ADV_Upd_At, ADV_Upd_By
     FIN_PRJ_Revenue     : REV_ID, PRJ_ID, REV_Date, REV_Amnt, REV_Type, REV_Source, REV_Pay_Methd, REV_Invoice_Number, REV_Pay_Status, REV_Total, REV_Remain, ADV_Crt_At, ADV_Crt_By, ADV_Upd_At, ADV_Upd_By
 
-============================================================
 5.0 SYSTEM ENGINES (ENG_)
-============================================================
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ### ENG_Settings ###
@@ -479,9 +469,7 @@ _______________________________________________
 
 **************************************************************************************************************
 
-============================================================
 6.0 WALK-THROUGH EXAMPLE
-============================================================
 
 Below is a complete, realistic end-to-end flow showing how a typical user interacts with the system.
 This example demonstrates exactly how the ENG_ sheets, the setup.js, and the Google Sheet database work together to generate screens, forms, validation, saving, views, and audit logs.
@@ -663,9 +651,7 @@ Clear browser storage
 END OF WALK-THROUGH EXAMPLE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-============================================================
 7.0 The 3 DBUG Tabs
-============================================================
 
 These tabs serve as the system's internal monitoring and diagnostic center. They are separate from the SYS_Audit_Log (which is for business compliance) and focus on technical system health.
 
@@ -718,6 +704,4 @@ try {
 } catch (e) {
    logError_(user.id, "SAVE_
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-============================================================
-============================================================
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
