@@ -1,1 +1,8 @@
-{}
+{
+  "gitlens.enabled": false,
+  "githubPullRequests.showNotifications": false,
+  "githubPullRequests.showPullRequestInSCM": false,
+  "githubPullRequests.telemetry.enabled": false,
+  "git.showPushSuccessNotification": false,
+  "scm.showIncomingOutgoing": false
+}
