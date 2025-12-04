@@ -1,0 +1,16 @@
+{
+  "name": "ba-nijjara-erp-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Automated Playwright tests for NIJJARA ERP",
+  "license": "UNLICENSED",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:all": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

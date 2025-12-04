@@ -1,0 +1,132 @@
+[
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “'unsafe-inline'” within script-src: ‘strict-dynamic’ specified\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676482305
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “https:” within script-src: ‘strict-dynamic’ specified\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676482306
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “http:” within script-src: ‘strict-dynamic’ specified\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676482306
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “'unsafe-inline'” within script-src: nonce-source or hash-source specified\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676482306
+  },
+  {
+    "type": "error",
+    "text": "Error",
+    "timestamp": 1764676485688
+  },
+  {
+    "type": "error",
+    "text": "[JavaScript Error: \"downloadable font: download failed (font-family: \"Roboto\" style:normal weight:500 stretch:100 src index:0): status=2147746065 source: https://fonts.gstatic.com/s/roboto/v50/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBA.woff2\"]",
+    "timestamp": 1764676486357
+  },
+  {
+    "type": "timeStamp",
+    "text": "CSI/tbsd_",
+    "timestamp": 1764676487413
+  },
+  {
+    "type": "timeStamp",
+    "text": "CSI/_tbnd",
+    "timestamp": 1764676487414
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_272J68FCRF” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676487466
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_272J68FCRF” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676487466
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_272J68FCRF” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676487466
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_YYP88VSJWR” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676487681
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_YYP88VSJWR” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676487682
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_YYP88VSJWR” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676487682
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “'report-sample'” within script-src: ‘strict-dynamic’ specified\" {file: \"https://feedback-pa.clients6.google.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.W5qDlPExdtA.O%2Fd%3D1%2Frs%3DAHpOoo8JInlRP_yLzwScb00AozrrUS6gJg%2Fm%3D__features__#parent=https%3A%2F%2Fdevelopers.google.com&rpctoken=455587782\" line: 0}]",
+    "timestamp": 1764676487900
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “'unsafe-inline'” within script-src: ‘strict-dynamic’ specified\" {file: \"https://feedback-pa.clients6.google.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.W5qDlPExdtA.O%2Fd%3D1%2Frs%3DAHpOoo8JInlRP_yLzwScb00AozrrUS6gJg%2Fm%3D__features__#parent=https%3A%2F%2Fdevelopers.google.com&rpctoken=455587782\" line: 0}]",
+    "timestamp": 1764676487900
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “https:” within script-src: ‘strict-dynamic’ specified\" {file: \"https://feedback-pa.clients6.google.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.W5qDlPExdtA.O%2Fd%3D1%2Frs%3DAHpOoo8JInlRP_yLzwScb00AozrrUS6gJg%2Fm%3D__features__#parent=https%3A%2F%2Fdevelopers.google.com&rpctoken=455587782\" line: 0}]",
+    "timestamp": 1764676487901
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “http:” within script-src: ‘strict-dynamic’ specified\" {file: \"https://feedback-pa.clients6.google.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.W5qDlPExdtA.O%2Fd%3D1%2Frs%3DAHpOoo8JInlRP_yLzwScb00AozrrUS6gJg%2Fm%3D__features__#parent=https%3A%2F%2Fdevelopers.google.com&rpctoken=455587782\" line: 0}]",
+    "timestamp": 1764676487901
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Ignoring “'unsafe-inline'” within script-src: nonce-source or hash-source specified\" {file: \"https://feedback-pa.clients6.google.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.W5qDlPExdtA.O%2Fd%3D1%2Frs%3DAHpOoo8JInlRP_yLzwScb00AozrrUS6gJg%2Fm%3D__features__#parent=https%3A%2F%2Fdevelopers.google.com&rpctoken=455587782\" line: 0}]",
+    "timestamp": 1764676487901
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"Content-Security-Policy: Couldn’t process unknown directive ‘require-trusted-types-for’\" {file: \"https://feedback-pa.clients6.google.com/static/proxy.html?usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.W5qDlPExdtA.O%2Fd%3D1%2Frs%3DAHpOoo8JInlRP_yLzwScb00AozrrUS6gJg%2Fm%3D__features__#parent=https%3A%2F%2Fdevelopers.google.com&rpctoken=455587782\" line: 0}]",
+    "timestamp": 1764676487903
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_SM8HXJ53K2” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676488239
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_SM8HXJ53K2” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676488240
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_SM8HXJ53K2” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676488240
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_64EQFFKSHW” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676488319
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_64EQFFKSHW” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676488319
+  },
+  {
+    "type": "warning",
+    "text": "[JavaScript Warning: \"The value of the attribute “expires” for the cookie “_ga_64EQFFKSHW” has been overwritten.\" {file: \"https://developers.google.com/apps-script/\" line: 0}]",
+    "timestamp": 1764676488320
+  }
+]

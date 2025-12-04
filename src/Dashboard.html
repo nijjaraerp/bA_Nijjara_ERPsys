@@ -1,10 +1,174 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Nijjara ERP</title>
-  </head>
-  <body>
-    <h1>Nijjara ERP Loading...</h1>
-  </body>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nijjara ERP Dashboard</title>
+  <!-- Bootstrap RTL + Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #0078f0;
+      --bg-dark: #07080d;
+      --glass: rgba(25,28,48,0.8);
+      --text: #e0e0e0;
+      --border-glass: rgba(255,255,255,0.1);
+    }
+    body { 
+      background: var(--bg-dark); 
+      color: var(--text); 
+      font-family: 'Cairo', sans-serif; 
+      overflow: hidden;
+    }
+    /* Boot Screen */
+    #bootScreen {
+      position: fixed; top:0; left:0; width:100%; height:100vh;
+      background: #000; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      z-index:1000; transition: opacity 1s;
+    }
+    #bootScreen.hidden { opacity:0; pointer-events:none; }
+    .boot-logo { font-size:2.5rem; color:#0078f0; margin-bottom:2rem; }
+    .boot-progress { width:300px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; margin:1rem 0; }
+    .boot-progress-bar { height:100%; background:#0078f0; width:0%; animation: load 3s ease-out forwards; }
+    @keyframes load { to { width:100%; } }
+    /* Sidebar from Index, dark themed */
+    .sidebar {
+      position:fixed; right:0; top:0; width:280px; height:100vh;
+      background: var(--glass); backdrop-filter:blur(15px);
+      padding:1rem; box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+    }
+    .sidebar .nav-link { color:var(--text); border-radius:8px; margin:2px 0; transition:all 0.3s; }
+    .sidebar .nav-link.active, .sidebar .nav-link:hover { background:var(--primary-color); }
+    /* Main Content */
+    .main-content { margin-right:280px; padding:2rem; }
+    .kpi-card {
+      background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--border-glass);
+      border-radius:15px; padding:1.5rem; text-align:center; margin-bottom:1rem;
+      box-shadow:0 4px 15px rgba(0,0,0,0.3);
+    }
+    .kpi-card h2 { color:var(--primary-color); font-size:2rem; }
+    /* Neural Dock minimal */
+    #neuralDock {
+      position:fixed; bottom:2rem; left:50%; transform:translateX(-50%);
+      display:flex; gap:1rem; background:var(--glass); padding:1rem; border-radius:20px;
+      backdrop-filter:blur(20px); border:1px solid var(--border-glass);
+    }
+    .dock-item { width:60px; height:60px; background:var(--glass); border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.3s; }
+    .dock-item:hover { transform:scale(1.1); background:var(--primary-color); }
+    /* Hide views initially */
+    #moduleView, #formView { display:none; }
+  </style>
+</head>
+<body>
+  <!-- Boot Screen from Dashboard.html -->
+  <div id="bootScreen">
+    <div class="boot-logo">نظام نجارة ERP</div>
+    <div class="boot-progress"><div class="boot-progress-bar"></div></div>
+    <p>جاري التحميل...</p>
+  </div>
+
+  <!-- Sidebar from Index.html (dark themed) -->
+  <nav class="sidebar">
+    <h5 class="text-white mb-4">القوائم الرئيسية</h5>
+    <ul class="nav flex-column">
+      <li class="nav-item"><a class="nav-link active" href="#" onclick="showDashboard()"><i class="bi bi-house"></i>الرئيسية</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('SYS')"><i class="bi bi-gear"></i>النظام</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('HRM')"><i class="bi bi-people"></i>الموارد البشرية</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('PRJ')"><i class="bi bi-kanban"></i>المشاريع</a></li>
+      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('FIN')"><i class="bi bi-cash-stack"></i>المالية</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content from Index.html, adapted -->
+  <div class="main-content" id="mainContent">
+    <!-- Dashboard View with KPI Cards -->
+    <div id="dashboardView">
+      <h2>لوحة التحكم</h2>
+      <div class="row" id="kpiCards">
+        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-people display-4 mb-3"></i><h5>إجمالي الموظفين</h5><h2 id="totalEmployees">0</h2></div></div>
+        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-kanban display-4 mb-3"></i><h5>المشاريع النشطة</h5><h2 id="activeProjects">0</h2></div></div>
+        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-cash-stack display-4 mb-3"></i><h5>إجمالي الإيرادات</h5><h2 id="totalRevenue">0</h2></div></div>
+        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-percent display-4 mb-3"></i><h5>نسبة الإنجاز</h5><h2 id="completionRate">0%</h2></div></div>
+      </div>
+    </div>
+    <!-- Module View placeholder -->
+    <div id="moduleView">
+      <h2 id="moduleTitle">الوحدة</h2>
+      <div id="dataGrid">جاري تحميل البيانات...</div>
+    </div>
+    <!-- Form View placeholder -->
+    <div id="formView">
+      <h2>نموذج</h2>
+      <div id="formContainer">نموذج قيد التطوير</div>
+    </div>
+  </div>
+
+  <!-- Minimal Neural Dock from Dashboard.html -->
+  <div id="neuralDock">
+    <div class="dock-item" onclick="openModuleWindow('HRM')"><i class="bi bi-people fs-3"></i></div>
+    <div class="dock-item" onclick="openModuleWindow('PRJ')"><i class="bi bi-kanban fs-3"></i></div>
+    <div class="dock-item" onclick="openModuleWindow('FIN')"><i class="bi bi-cash-stack fs-3"></i></div>
+    <div class="dock-item" onclick="showDashboard()"><i class="bi bi-house fs-3"></i></div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Merged JS: Core init + minimal module loading -->
+  <script>
+    let currentModule = '';
+    // Init: Boot -> Dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        document.getElementById('bootScreen').classList.add('hidden');
+        setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 1000);
+        loadDashboardData();
+      }, 3000);
+    });
+    // From Index: Navigation
+    function showDashboard() {
+      document.getElementById('dashboardView').style.display = 'block';
+      document.getElementById('moduleView').style.display = 'none';
+      document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+      event.target.closest('.nav-link')?.classList.add('active');
+    }
+    function showModule(moduleCode) {
+      currentModule = moduleCode;
+      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('moduleView').style.display = 'block';
+      document.getElementById('moduleTitle').textContent = moduleCode;
+      // Simulate data load
+      document.getElementById('dataGrid').innerHTML = `<p>بيانات وحدة ${moduleCode}</p>`;
+      document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+      event.target.closest('.nav-link')?.classList.add('active');
+    }
+    // From Index: Load KPI
+    function loadDashboardData() {
+      // GAS call placeholder
+      document.getElementById('totalEmployees').textContent = '25';
+      document.getElementById('activeProjects').textContent = '8';
+      document.getElementById('totalRevenue').textContent = '150,000';
+      document.getElementById('completionRate').textContent = '85%';
+    }
+    // Minimal window from Dashboard dock
+    function openModuleWindow(module) {
+      const win = document.createElement('div');
+      win.className = 'kpi-card position-fixed'; win.style.cssText = 'top:20%; left:20%; width:400px; height:300px; z-index:100;';
+      win.innerHTML = `<h4>${module}</h4><p>نافذة من الـ Dock</p><button onclick="this.parentElement.remove()" class="btn btn-danger">إغلاق</button>`;
+      document.body.appendChild(win);
+      win.querySelector('h4').addEventListener('mousedown', (e) => {
+        // Simple drag
+        let dx=0, dy=0;
+        document.onmousemove = (ev) => {
+          dx = ev.clientX - e.clientX; dy = ev.clientY - e.clientY;
+          win.style.left = (parseInt(win.style.left) + dx) + 'px';
+          win.style.top = (parseInt(win.style.top) + dy) + 'px';
+        };
+        document.onmouseup = () => document.onmousemove = null;
+      });
+    }
+  </script>
+</body>
 </html>

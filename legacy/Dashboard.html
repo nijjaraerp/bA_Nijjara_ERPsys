@@ -1,0 +1,4188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" spellcheck="false">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nijjara-OS | جاري التمهيد...</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* --- II. CSS STYLES --- */
+
+      :root {
+        --font-family: "Cairo", sans-serif;
+        --font-mono: "Share Tech Mono", monospace;
+        --color-bg-dark-matter: #07080d;
+        --color-bg-glass: rgba(25, 28, 48, 0.6);
+        --color-border-glass: rgba(255, 255, 255, 0.15);
+        --color-text: #e0e0e0;
+        --color-text-muted: #aaa;
+        --color-accent-primary: #0078f0;
+        --color-accent-secondary: #00a0f0;
+        --color-accent-red: #d93030;
+        --color-accent-green: #30d970;
+        --shadow-depth-md: 0 5px 15px rgba(0, 0, 0, 0.3);
+        --shadow-depth-lg: 0 10px 30px rgba(0, 0, 0, 0.4);
+      }
+
+      /* --- Global Reset & Body --- */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+        background-color: var(--color-bg-dark-matter);
+        color: var(--color-text);
+        font-family: var(--font-family);
+        direction: rtl;
+      }
+
+      /* --- 1. BOOT SCREEN (Login) --- */
+      #boot-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: #000;
+        z-index: 1000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        transition: opacity 1s ease-out, visibility 1s ease-out;
+      }
+      #boot-log {
+        width: 450px;
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        color: var(--color-accent-green);
+      }
+      #boot-log p {
+        margin-bottom: 5px;
+        white-space: pre;
+      }
+      .login-box {
+        display: none;
+        flex-direction: column;
+        width: 350px;
+        margin-top: 20px;
+        padding: 25px;
+        border: 1px solid var(--color-accent-primary);
+        box-shadow: var(--shadow-depth-lg);
+        background: var(--color-bg-glass);
+        border-radius: 12px;
+      }
+      .login-box h2 {
+        font-family: var(--font-family);
+        text-align: center;
+        color: var(--color-accent-primary);
+        margin-bottom: 20px;
+      }
+      .login-box input {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--color-text-muted);
+        color: var(--color-text);
+        padding: 12px;
+        margin-bottom: 15px;
+        font-family: var(--font-family);
+        font-size: 1rem;
+        text-align: right;
+        border-radius: 5px;
+      }
+      .login-box input:focus {
+        outline: none;
+        border-color: var(--color-accent-primary);
+        box-shadow: 0 0 8px var(--color-accent-secondary);
+      }
+      .login-box button {
+        background: var(--color-accent-primary);
+        border: none;
+        color: #fff;
+        padding: 12px;
+        font-family: var(--font-family);
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 5px;
+      }
+      .login-box button:hover {
+        background: var(--color-accent-secondary);
+        box-shadow: var(--shadow-depth-md);
+        transform: translateY(-2px);
+      }
+      .login-box button:disabled {
+        background: var(--color-text-muted);
+        cursor: not-allowed;
+      }
+      #login-feedback {
+        color: var(--color-accent-red);
+        text-align: center;
+        margin-top: 15px;
+        height: 20px;
+        font-size: 0.9rem;
+      }
+
+      /* --- 2. NIJJARA-OS INTERFACE (The "Desktop") --- */
+      #nijjara-os {
+        display: none;
+        height: 100vh;
+        width: 100vw;
+        position: relative;
+      }
+
+      /* --- 2.1 The "Holo-Deck" (Desktop Background) --- */
+      #holo-deck {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+          ellipse at 50% 50%,
+          #1a1a2e 0%,
+          var(--color-bg-dark-matter) 70%
+        );
+        z-index: 1;
+      }
+      #particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.1) 1px,
+          transparent 1px
+        );
+        background-size: 5px 5px;
+        animation: pulse 15s infinite;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.4;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+      }
+
+      /* --- 2.2 The "Neural Dock" (Taskbar) --- */
+      #neural-dock {
+        position: fixed;
+        bottom: -85px;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 90px;
+        padding: 10px 15px;
+        padding-bottom: 30px;
+        display: flex;
+        gap: 0;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        background: var(--color-bg-glass);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 15px;
+        box-shadow: var(--shadow-depth-lg);
+        animation: slideInUp 1s ease-out;
+        transition: bottom 0.2s ease-out;
+      }
+
+      #neural-dock:hover {
+        bottom: 0px;
+      }
+
+      .dock-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 10px;
+        height: 100%;
+      }
+      .dock-group.modules {
+        border-left: 1px solid var(--color-border-glass);
+        padding-left: 20px;
+        margin-left: 10px;
+      }
+      .dock-group.window-mgmt {
+        border-right: 1px solid var(--color-border-glass);
+        padding-right: 20px;
+        margin-right: 10px;
+      }
+
+      .dock-app {
+        width: 70px;
+        height: 70px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        padding: 5px;
+      }
+      .dock-app-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dock-app-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: var(--color-text-muted);
+        transition: all 0.3s ease;
+      }
+      .dock-app-label {
+        font-family: var(--font-family);
+        font-size: 0.75rem;
+        font-weight: 400;
+        margin-top: 5px;
+        color: var(--color-text-muted);
+        transition: all 0.3s ease;
+      }
+      .dock-app:hover {
+        transform: scale(1.1) translateY(-10px);
+        background: var(--color-accent-primary);
+        color: #fff;
+      }
+      .dock-app:hover .dock-app-icon svg {
+        stroke: #fff;
+      }
+      .dock-app:hover .dock-app-label {
+        color: #fff;
+      }
+
+      .dock-app .tooltip {
+        position: absolute;
+        bottom: 85px;
+        background: #000;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        font-family: var(--font-family);
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+      }
+      .dock-app:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(-5px);
+      }
+
+      /* --- 2.3 App Windows --- */
+      .app-window {
+        position: absolute;
+        width: 600px;
+        height: 400px;
+        z-index: 10;
+        background: var(--color-bg-glass);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 12px;
+        box-shadow: var(--shadow-depth-lg);
+        animation: materialize 0.5s ease-out;
+        resize: both;
+        overflow: hidden;
+        min-width: 300px;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        /* Only transition width/height for resize, not position (causes drag lag) */
+        transition: width 0.3s ease, height 0.3s ease;
+        /* GPU acceleration hints for smooth dragging */
+        will-change: transform;
+        transform: translateZ(0);
+      }
+      /* Disable expensive effects during drag for performance */
+      .app-window.dragging {
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        transition: none;
+        cursor: grabbing;
+      }
+      @keyframes materialize {
+        from {
+          opacity: 0;
+          transform: scale(0.7) rotateY(45deg);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) rotateY(0);
+        }
+      }
+      .window-header {
+        width: 100%;
+        height: 35px;
+        background: rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 10px;
+        cursor: grab;
+        flex-shrink: 0;
+      }
+      .window-header:active {
+        cursor: grabbing;
+      }
+      .window-title {
+        font-weight: 700;
+        color: var(--color-text);
+      }
+      .window-controls {
+        display: flex;
+        gap: 8px;
+        flex-grow: 1;
+        justify-content: space-between;
+      }
+      .window-controls-left {
+        display: flex;
+        gap: 8px;
+      }
+      .window-controls-right {
+        display: flex;
+        gap: 8px;
+      }
+      .window-controls button {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        line-height: 1;
+        font-weight: bold;
+        color: #000;
+      }
+      .win-btn-icon {
+        background: none;
+        color: var(--color-text-muted);
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+      }
+      .win-btn-icon svg {
+        width: 12px;
+        height: 12px;
+        stroke: var(--color-text-muted);
+        stroke-width: 3;
+      }
+      .win-btn-icon:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .win-btn-icon:hover svg {
+        stroke: var(--color-text);
+      }
+      .btn-close {
+        background: var(--color-accent-red);
+      }
+      .btn-min {
+        background: #f0a000;
+      }
+      .btn-max {
+        background: var(--color-accent-green);
+      }
+      .window-content {
+        padding: 20px;
+        flex-grow: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-glass) transparent;
+      }
+      .window-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      .window-content::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .window-content::-webkit-scrollbar-thumb {
+        background-color: var(--color-border-glass);
+        border-radius: 8px;
+      }
+      .window-content h3 {
+        color: var(--color-accent-primary);
+        border-bottom: 1px solid var(--color-border-glass);
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+      .window-content p {
+        margin-bottom: 10px;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 15px;
+        align-items: center;
+      }
+      .form-grid label {
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+      .form-grid input,
+      .form-grid select,
+      .form-grid textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--color-text-muted);
+        color: var(--color-text);
+        padding: 10px;
+        font-family: var(--font-family);
+        font-size: 1rem;
+        border-radius: 5px;
+      }
+      .form-grid input:focus,
+      .form-grid select:focus,
+      .form-grid textarea:focus {
+        outline: none;
+        border-color: var(--color-accent-primary);
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      .data-table th,
+      .data-table td {
+        padding: 10px 12px;
+        text-align: right;
+        border-bottom: 1px solid var(--color-border-glass);
+      }
+      .data-table th {
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--color-accent-primary);
+      }
+      .data-table tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .win-btn {
+        background: var(--color-accent-primary);
+        border: none;
+        color: #fff;
+        padding: 10px 15px;
+        font-family: var(--font-family);
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 5px;
+        margin: 10px 5px 0 0;
+      }
+      .win-btn:hover {
+        background: var(--color-accent-secondary);
+        transform: translateY(-2px);
+      }
+      .win-btn-danger {
+        background: var(--color-accent-red);
+      }
+      .win-btn-danger:hover {
+        background: #ff5555;
+      }
+      .audit-log {
+        font-family: var(--font-mono);
+        color: var(--color-text);
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 5px;
+        height: 100%;
+        overflow-y: auto;
+      }
+
+      /* ================================================================================
+         HRM EMPLOYEES CRUD INTERFACE STYLES
+         Reference: SYSTEM ARCHITECTURE & TECHNICAL SPE.md - Section 7.2, 7.3
+         ================================================================================ */
+
+      /* --- 2.8 Enhanced Data Table with Actions --- */
+      .data-table-container {
+        width: 100%;
+        overflow-x: auto;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      .data-table th {
+        position: sticky;
+        top: 0;
+        background: rgba(0, 120, 240, 0.2);
+        color: var(--color-accent-primary);
+        font-weight: 700;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s;
+      }
+      .data-table th:hover {
+        background: rgba(0, 120, 240, 0.4);
+      }
+      .data-table th.sorted-asc::after {
+        content: " ▲";
+        font-size: 0.7em;
+      }
+      .data-table th.sorted-desc::after {
+        content: " ▼";
+        font-size: 0.7em;
+      }
+
+      .data-table td.actions-cell {
+        white-space: nowrap;
+        text-align: center;
+      }
+      .row-action-btn {
+        background: transparent;
+        border: 1px solid var(--color-border-glass);
+        color: var(--color-text-muted);
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 0 3px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .row-action-btn:hover {
+        background: var(--color-accent-primary);
+        color: #fff;
+        border-color: var(--color-accent-primary);
+      }
+      .row-action-btn.view-btn:hover {
+        background: var(--color-accent-secondary);
+        border-color: var(--color-accent-secondary);
+      }
+      .row-action-btn.edit-btn:hover {
+        background: #f0a000;
+        border-color: #f0a000;
+      }
+      .row-action-btn.delete-btn:hover {
+        background: var(--color-accent-red);
+        border-color: var(--color-accent-red);
+      }
+      .row-action-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+      }
+
+      /* --- 2.9 Toolbar (Search, Filter, Pagination) --- */
+      .module-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+      }
+      .toolbar-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .toolbar-search input {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--color-border-glass);
+        color: var(--color-text);
+        padding: 10px 15px;
+        font-family: var(--font-family);
+        font-size: 0.95rem;
+        border-radius: 6px;
+        width: 250px;
+      }
+      .toolbar-search input:focus {
+        outline: none;
+        border-color: var(--color-accent-primary);
+        box-shadow: 0 0 8px rgba(0, 120, 240, 0.3);
+      }
+      .toolbar-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .toolbar-btn {
+        background: var(--color-accent-primary);
+        border: none;
+        color: #fff;
+        padding: 10px 20px;
+        font-family: var(--font-family);
+        font-weight: 600;
+        font-size: 0.95rem;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+      }
+      .toolbar-btn:hover {
+        background: var(--color-accent-secondary);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-depth-md);
+      }
+      .toolbar-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+      }
+
+      /* --- 2.10 Pagination --- */
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+      }
+      .pagination-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--color-border-glass);
+        color: var(--color-text);
+        padding: 8px 15px;
+        font-family: var(--font-family);
+        font-size: 0.9rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .pagination-btn:hover:not(:disabled) {
+        background: var(--color-accent-primary);
+        border-color: var(--color-accent-primary);
+      }
+      .pagination-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .pagination-info {
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+      }
+      .pagination-info strong {
+        color: var(--color-text);
+      }
+
+      /* --- 2.11 Modal Form System --- */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .modal {
+        background: var(--color-bg-glass);
+        border: 1px solid var(--color-accent-primary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-depth-lg), 0 0 30px rgba(0, 120, 240, 0.3);
+        max-width: 800px;
+        width: 90%;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        animation: slideUp 0.4s ease;
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--color-border-glass);
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 12px 12px 0 0;
+      }
+      .modal-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--color-accent-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .modal-title svg {
+        width: 24px;
+        height: 24px;
+        stroke: var(--color-accent-primary);
+      }
+      .modal-close {
+        background: transparent;
+        border: none;
+        color: var(--color-text-muted);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .modal-close:hover {
+        background: var(--color-accent-red);
+        color: #fff;
+      }
+      .modal-close svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        stroke-width: 3;
+      }
+
+      .modal-body {
+        padding: 25px;
+        overflow-y: auto;
+        flex: 1;
+      }
+
+      /* --- 2.12 Tab Navigation in Modal --- */
+      .modal-tabs {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--color-border-glass);
+        padding-bottom: 10px;
+        outline: none;
+        direction: rtl;
+      }
+      .modal-tab {
+        background: transparent;
+        border: none;
+        color: var(--color-text-muted);
+        padding: 10px 20px;
+        font-family: var(--font-family);
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.2s;
+        position: relative;
+      }
+      .modal-tab:focus {
+        outline: none;
+        box-shadow: none;
+      }
+      .modal-tab:hover {
+        color: var(--color-text);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .modal-tab.active {
+        color: var(--color-accent-primary);
+        background: rgba(0, 120, 240, 0.1);
+      }
+      .modal-tab.active::after {
+        content: "";
+        position: absolute;
+        bottom: -11px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--color-accent-primary);
+      }
+      .tab-content {
+        display: none;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        direction: rtl;
+      }
+      .tab-content.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* --- 2.13 Enhanced Form Grid --- */
+      .form-grid-enhanced {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .form-field.full-width {
+        grid-column: 1 / -1;
+      }
+      .form-field label {
+        font-weight: 600;
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .form-field label .required {
+        color: var(--color-accent-red);
+      }
+      .form-field input,
+      .form-field select,
+      .form-field textarea {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--color-border-glass);
+        color: var(--color-text);
+        padding: 12px 15px;
+        font-family: var(--font-family);
+        font-size: 1rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+      .form-field input:focus,
+      .form-field select:focus,
+      .form-field textarea:focus {
+        outline: none;
+        border-color: var(--color-accent-primary);
+        box-shadow: 0 0 10px rgba(0, 120, 240, 0.3);
+      }
+      .form-field input:read-only,
+      .form-field select:disabled,
+      .form-field textarea:read-only {
+        background: rgba(50, 50, 60, 0.5);
+        color: var(--color-text-muted);
+        cursor: not-allowed;
+      }
+      .form-field input.error,
+      .form-field select.error,
+      .form-field textarea.error {
+        border-color: var(--color-accent-red);
+        box-shadow: 0 0 10px rgba(217, 48, 48, 0.3);
+      }
+      .form-field .field-error {
+        color: var(--color-accent-red);
+        font-size: 0.85rem;
+        margin-top: 3px;
+      }
+
+      /* --- 2.14 Modal Footer --- */
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 20px 25px;
+        border-top: 1px solid var(--color-border-glass);
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 0 0 12px 12px;
+      }
+      .modal-btn {
+        padding: 12px 25px;
+        font-family: var(--font-family);
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .modal-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+      }
+      .modal-btn-primary {
+        background: var(--color-accent-primary);
+        border: none;
+        color: #fff;
+      }
+      .modal-btn-primary:hover {
+        background: var(--color-accent-secondary);
+        transform: translateY(-2px);
+      }
+      .modal-btn-primary:disabled {
+        background: var(--color-text-muted);
+        cursor: not-allowed;
+        transform: none;
+      }
+      .modal-btn-secondary {
+        background: transparent;
+        border: 1px solid var(--color-border-glass);
+        color: var(--color-text);
+      }
+      .modal-btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--color-text-muted);
+      }
+      .modal-btn-danger {
+        background: var(--color-accent-red);
+        border: none;
+        color: #fff;
+      }
+      .modal-btn-danger:hover {
+        background: #ff5555;
+      }
+
+      /* --- 2.15 View Record Display --- */
+      .record-view {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      .record-field {
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        border-right: 3px solid var(--color-accent-primary);
+      }
+      .record-field.full-width {
+        grid-column: 1 / -1;
+      }
+      .record-field-label {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        margin-bottom: 5px;
+      }
+      .record-field-value {
+        font-size: 1.05rem;
+        color: var(--color-text);
+        font-weight: 500;
+      }
+
+      /* --- 2.16 Loading & Empty States --- */
+      .loading-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: var(--color-text-muted);
+      }
+      .loading-spinner::before {
+        content: "";
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--color-border-glass);
+        border-top-color: var(--color-accent-primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 15px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--color-text-muted);
+      }
+      .empty-state svg {
+        width: 80px;
+        height: 80px;
+        stroke: var(--color-border-glass);
+        margin-bottom: 20px;
+      }
+      .empty-state h4 {
+        font-size: 1.2rem;
+        color: var(--color-text);
+        margin-bottom: 10px;
+      }
+
+      /* --- 2.17 Toast Notifications --- */
+      .toast-container {
+        position: fixed;
+        top: 70px;
+        left: 20px;
+        z-index: 4000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .toast {
+        background: var(--color-bg-glass);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 8px;
+        padding: 15px 20px;
+        min-width: 300px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: var(--shadow-depth-lg);
+        animation: slideInRight 0.3s ease;
+      }
+      @keyframes slideInRight {
+        from {
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .toast.success {
+        border-right: 4px solid var(--color-accent-green);
+      }
+      .toast.error {
+        border-right: 4px solid var(--color-accent-red);
+      }
+      .toast.warning {
+        border-right: 4px solid #f0a000;
+      }
+      .toast svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+      .toast.success svg {
+        stroke: var(--color-accent-green);
+      }
+      .toast.error svg {
+        stroke: var(--color-accent-red);
+      }
+      .toast.warning svg {
+        stroke: #f0a000;
+      }
+      .toast-message {
+        flex: 1;
+      }
+      .toast-close {
+        background: transparent;
+        border: none;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        padding: 5px;
+      }
+
+      /* --- 2.18 Confirm Dialog --- */
+      .confirm-dialog {
+        background: var(--color-bg-glass);
+        border: 1px solid var(--color-accent-red);
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: var(--shadow-depth-lg), 0 0 30px rgba(217, 48, 48, 0.2);
+      }
+      .confirm-dialog svg {
+        width: 60px;
+        height: 60px;
+        stroke: var(--color-accent-red);
+        margin-bottom: 20px;
+      }
+      .confirm-dialog h4 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+      }
+      .confirm-dialog p {
+        color: var(--color-text-muted);
+        margin-bottom: 25px;
+      }
+      .confirm-dialog .dialog-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      /* --- 2.19 Responsive Design --- */
+      @media (max-width: 768px) {
+        .form-grid-enhanced {
+          grid-template-columns: 1fr;
+        }
+        .record-view {
+          grid-template-columns: 1fr;
+        }
+        .modal {
+          width: 95%;
+          max-height: 90vh;
+        }
+        .module-toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .toolbar-search input {
+          width: 100%;
+        }
+        #neural-dock {
+          flex-wrap: wrap;
+          height: auto;
+          padding: 15px;
+        }
+      }
+
+      /* --- 2.4 The "Nexus" (Command Center) --- */
+      #nexus {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 600px;
+        background: var(--color-bg-glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--color-accent-primary);
+        border-radius: 12px;
+        box-shadow: var(--shadow-depth-lg),
+          0 0 15px var(--color-accent-secondary);
+        z-index: 2000;
+        padding: 20px;
+        display: none;
+        animation: nexus-pulse 0.7s ease-out;
+      }
+      @keyframes nexus-pulse {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.8);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+      #nexus h3 {
+        text-align: center;
+        color: var(--color-accent-primary);
+        margin-bottom: 15px;
+      }
+      #nexus-input {
+        width: 100%;
+        padding: 15px;
+        font-family: var(--font-family);
+        font-size: 1.2rem;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 8px;
+        color: var(--color-text);
+        text-align: right;
+      }
+      #nexus-input:focus {
+        outline: none;
+        border-color: var(--color-accent-primary);
+      }
+      #nexus-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1999;
+        display: none;
+      }
+
+      /* --- 2.5 Floating Action Buttons (FAB) --- */
+      #fab-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 900;
+        pointer-events: none;
+      }
+
+      .module-fab {
+        position: absolute;
+        width: 60px;
+        height: 60px;
+        display: none;
+        z-index: 901;
+        pointer-events: auto;
+      }
+
+      .fab-main {
+        width: 60px;
+        height: 60px;
+        background: var(--color-accent-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        box-shadow: var(--shadow-depth-md);
+        transition: all 0.3s ease;
+      }
+      .fab-main:active {
+        cursor: grabbing;
+      }
+      .fab-main svg {
+        width: 30px;
+        height: 30px;
+        stroke: #fff;
+        stroke-width: 2;
+        pointer-events: none;
+      }
+      .fab-main:hover {
+        transform: scale(1.1);
+        background: var(--color-accent-secondary);
+      }
+
+      .fab-rays {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: scale(0);
+        opacity: 0;
+        transition: all 0.3s ease-out;
+        pointer-events: none;
+      }
+      .module-fab.active .fab-rays {
+        transform: scale(1);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .fab-ray {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100px;
+        transform-origin: 0 50%;
+        height: 1px;
+      }
+      .fab-sub-app {
+        position: absolute;
+        right: -20px;
+        top: -20px;
+        width: 40px;
+        height: 40px;
+        background: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: var(--shadow-depth-md);
+        transition: all 0.2s ease;
+      }
+      .fab-sub-app svg {
+        width: 20px;
+        height: 20px;
+        stroke: var(--color-accent-primary);
+        stroke-width: 2;
+      }
+      .fab-sub-app:hover {
+        background: var(--color-text-muted);
+      }
+
+      .fab-ray:nth-child(1) {
+        transform: translate(30px, 30px) rotate(-45deg);
+      }
+      .fab-ray:nth-child(2) {
+        transform: translate(30px, 30px) rotate(0deg);
+      }
+      .fab-ray:nth-child(3) {
+        transform: translate(30px, 30px) rotate(45deg);
+      }
+      .fab-ray:nth-child(1) .fab-sub-app {
+        transition-delay: 0.05s;
+      }
+      .fab-ray:nth-child(2) .fab-sub-app {
+        transition-delay: 0.1s;
+      }
+      .fab-ray:nth-child(3) .fab-sub-app {
+        transition-delay: 0.15s;
+      }
+
+      /* --- 2.6 Status Bar --- */
+      #status-bar {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 998;
+        background: var(--color-bg-glass);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 8px;
+        padding: 10px 15px;
+        display: flex;
+        gap: 20px;
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        color: var(--color-text-muted);
+        box-shadow: var(--shadow-depth-md);
+      }
+      #user-info {
+        color: var(--color-text);
+        font-weight: 700;
+      }
+      #date-time {
+        direction: ltr;
+        text-align: left;
+        color: var(--color-accent-green);
+        min-width: 200px;
+      }
+
+      /* --- 2.7 Task Switcher --- */
+      #task-switcher {
+        position: fixed;
+        top: -55px;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 60px;
+        z-index: 998;
+        background: var(--color-bg-glass);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 0 0 12px 12px;
+        box-shadow: var(--shadow-depth-md);
+        padding: 5px 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: top 0.3s ease;
+      }
+
+      #task-switcher:hover {
+        top: 0;
+      }
+
+      .task-thumb {
+        width: 100px;
+        height: 50px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--color-border-glass);
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+      .task-thumb:hover {
+        transform: scale(1.1);
+        border-color: var(--color-accent-primary);
+      }
+      .task-thumb.minimized {
+        opacity: 0.6;
+        background: rgba(0, 0, 0, 0.6);
+      }
+      .task-thumb-icon {
+        width: 20px;
+        height: 20px;
+      }
+      .task-thumb-icon svg {
+        width: 100%;
+        height: 100%;
+        stroke: var(--color-text-muted);
+      }
+      .task-thumb-title {
+        font-family: var(--font-family);
+        font-size: 0.7rem;
+        color: var(--color-text-muted);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol
+          id="icon-hrm"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </symbol>
+        <symbol
+          id="icon-prj"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+          ></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </symbol>
+        <symbol
+          id="icon-fin"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </symbol>
+        <symbol
+          id="icon-sys"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+          ></path>
+        </symbol>
+        <symbol
+          id="icon-power"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+          <line x1="12" y1="2" x2="12" y2="12"></line>
+        </symbol>
+        <symbol
+          id="icon-grid"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </symbol>
+        <symbol
+          id="icon-layers"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </symbol>
+        <symbol
+          id="icon-maximize"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+          ></path>
+        </symbol>
+        <symbol
+          id="icon-restore"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
+          ></path>
+        </symbol>
+        <symbol
+          id="icon-eye"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </symbol>
+        <symbol
+          id="icon-plus"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </symbol>
+        <symbol
+          id="icon-search"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </symbol>
+        <symbol
+          id="icon-minus"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </symbol>
+        <symbol
+          id="icon-edit"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+          ></path>
+          <path
+            d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+          ></path>
+        </symbol>
+        <symbol
+          id="icon-trash"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path
+            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+          ></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </symbol>
+        <symbol
+          id="icon-save"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+          ></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </symbol>
+        <symbol
+          id="icon-x"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </symbol>
+        <symbol
+          id="icon-check"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </symbol>
+        <symbol
+          id="icon-alert-triangle"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+          ></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </symbol>
+        <symbol
+          id="icon-user"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </symbol>
+        <symbol
+          id="icon-chevron-left"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </symbol>
+        <symbol
+          id="icon-chevron-right"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </symbol>
+        <symbol
+          id="icon-refresh"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path
+            d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+          ></path>
+        </symbol>
+        <symbol
+          id="icon-inbox"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+          <path
+            d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+          ></path>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div id="boot-screen">
+      <div id="boot-log"></div>
+      <form class="login-box" id="login-box" onsubmit="return false;">
+        <h2>Nijjara ERP sys</h2>
+        <input
+          type="text"
+          id="username"
+          placeholder="اسم المستخدم"
+          value="mkhoraiby"
+          autocomplete="username"
+          spellcheck="false"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="كلمة السر"
+          autocomplete="current-password"
+          spellcheck="false"
+        />
+        <button id="login-button" type="submit">تسجيل دخول</button>
+        <div id="login-feedback"></div>
+      </form>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div id="nijjara-os">
+      <div id="holo-deck">
+        <div id="particles"></div>
+      </div>
+
+      <div id="status-bar">
+        <div id="user-info">USER: ...</div>
+        <div id="date-time">Loading clock...</div>
+      </div>
+
+      <div id="task-switcher"></div>
+
+      <div id="neural-dock">
+        <div class="dock-group window-mgmt">
+          <div class="dock-app" id="app-grid" data-title="ترتيب شبكي">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-grid"></use></svg>
+            </div>
+            <div class="dock-app-label">شبكي</div>
+          </div>
+          <div class="dock-app" id="app-cascade" data-title="ترتيب متتالي">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-layers"></use></svg>
+            </div>
+            <div class="dock-app-label">متتالي</div>
+          </div>
+          <div class="dock-app" id="app-minimize-all" data-title="تصغير الكل">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-minus"></use></svg>
+            </div>
+            <div class="dock-app-label">تصغير</div>
+          </div>
+          <div class="dock-app" id="app-expand-all" data-title="إظهار الكل">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-maximize"></use></svg>
+            </div>
+            <div class="dock-app-label">إظهار</div>
+          </div>
+        </div>
+
+        <div class="dock-group modules">
+          <div class="dock-app" id="app-hrm" data-title="الموارد البشرية (HRM)">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-hrm"></use></svg>
+            </div>
+            <div class="dock-app-label">الموارد</div>
+          </div>
+          <div class="dock-app" id="app-prj" data-title="المشاريع (PRJ)">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-prj"></use></svg>
+            </div>
+            <div class="dock-app-label">المشاريع</div>
+          </div>
+          <div class="dock-app" id="app-fin" data-title="المالية (FIN)">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-fin"></use></svg>
+            </div>
+            <div class="dock-app-label">المالية</div>
+          </div>
+          <div class="dock-app" id="app-sys" data-title="النظام (SYS)">
+            <div class="dock-app-icon">
+              <svg><use href="#icon-sys"></use></svg>
+            </div>
+            <div class="dock-app-label">النظام</div>
+          </div>
+        </div>
+
+        <div
+          class="dock-app"
+          id="app-shutdown"
+          data-title="إيقاف التشغيل"
+          style="color: var(--color-accent-red)"
+        >
+          <div class="dock-app-icon">
+            <svg style="stroke: var(--color-accent-red)">
+              <use href="#icon-power"></use>
+            </svg>
+          </div>
+          <div class="dock-app-label" style="color: var(--color-accent-red)">
+            خروج
+          </div>
+        </div>
+      </div>
+
+      <div id="fab-container"></div>
+
+      <div id="nexus-overlay"></div>
+      <div id="nexus">
+        <h3>مركز أوامر Nexus</h3>
+        <input
+          type="text"
+          id="nexus-input"
+          placeholder="اكتب أمراً أو استعلاماً... (مثال: إضافة موظف)"
+          spellcheck="false"
+        />
+      </div>
+    </div>
+
+    <template id="window-template">
+      <div class="app-window">
+        <div class="window-header">
+          <div class="window-controls">
+            <div class="window-controls-right">
+              <button
+                class="win-btn-icon btn-toggle-fab"
+                title="إظهار/إخفاء الزر العائم"
+              >
+                <svg><use href="#icon-eye"></use></svg>
+              </button>
+            </div>
+            <span class="window-title">عنوان النافذة</span>
+            <div class="window-controls-left">
+              <button class="win-btn-icon btn-min" title="تصغير">
+                <svg>
+                  <use
+                    href="#icon-minus"
+                    style="stroke-width: 4; transform: scale(0.8)"
+                  ></use>
+                </svg>
+              </button>
+              <button class="win-btn-icon btn-max" title="تكبير">
+                <svg><use href="#icon-maximize"></use></svg>
+              </button>
+              <button class="win-btn-icon btn-close" title="إغلاق">
+                <svg>
+                  <use
+                    href="#icon-plus"
+                    style="stroke-width: 4; transform: rotate(45deg) scale(0.8)"
+                  ></use>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="window-content"></div>
+      </div>
+    </template>
+
+    <template id="fab-template">
+      <div
+        class="module-fab"
+        style="top: calc(100vh - 200px); left: calc(100vw - 100px)"
+      >
+        <div class="fab-main"></div>
+        <div class="fab-rays"></div>
+      </div>
+    </template>
+
+    <template id="fab-ray-template">
+      <div class="fab-ray">
+        <div class="fab-sub-app" data-action=""></div>
+      </div>
+    </template>
+
+    <template id="task-thumb-template">
+      <div class="task-thumb">
+        <div class="task-thumb-icon">
+          <svg><use href="#icon-sys"></use></svg>
+        </div>
+        <span class="task-thumb-title">Window</span>
+      </div>
+    </template>
+
+    <script>
+      /* ================================================================================
+         III. JAVASCRIPT "OS KERNEL" - Enhanced with HRM_Employees CRUD
+         Reference: SYSTEM ARCHITECTURE & TECHNICAL SPE.md
+         ================================================================================ */
+
+      document.addEventListener("DOMContentLoaded", () => {
+        document.documentElement.setAttribute("spellcheck", "false");
+        try {
+          document
+            .querySelectorAll('input, textarea, [contenteditable="true"]')
+            .forEach((el) => el.setAttribute("spellcheck", "false"));
+        } catch (e) {}
+
+        // ================================================================================
+        // 1. ELEMENT SELECTORS & STATE MANAGEMENT
+        // ================================================================================
+
+        const bootScreen = document.getElementById("boot-screen");
+        const bootLog = document.getElementById("boot-log");
+        const loginBox = document.getElementById("login-box");
+        const loginButton = document.getElementById("login-button");
+        const usernameInput = document.getElementById("username");
+        const passwordInput = document.getElementById("password");
+        const nijjaraOS = document.getElementById("nijjara-os");
+        const windowTemplate = document.getElementById("window-template");
+        const fabContainer = document.getElementById("fab-container");
+        const fabTemplate = document.getElementById("fab-template");
+        const fabRayTemplate = document.getElementById("fab-ray-template");
+        const taskSwitcher = document.getElementById("task-switcher");
+        const taskThumbTemplate = document.getElementById(
+          "task-thumb-template"
+        );
+        const nexus = document.getElementById("nexus");
+        const nexusOverlay = document.getElementById("nexus-overlay");
+        const toastContainer = document.getElementById("toast-container");
+
+        // Module State Management
+        const moduleState = {
+          currentModule: null,
+          currentWindow: null,
+          pagination: { page: 1, pageSize: 15, totalPages: 0, totalRecords: 0 },
+          sortColumn: null,
+          sortDirection: "asc",
+          searchTerm: "",
+          sourceSheet: null,
+          viewId: null,
+        };
+
+        // --- 2. Boot Sequence & Login ---
+        const bootMessages = [
+          "BOOTING NIJJARA-OS v1.0...",
+          "Loading kernel modules... OK",
+          "Initializing 3D glass display... DONE",
+          "Connecting to neural-link... SECURE",
+          "Loading user authentication service...",
+          "Awaiting system key...",
+        ];
+
+        let i = 0;
+        function runBootLog() {
+          if (i < bootMessages.length) {
+            const p = document.createElement("p");
+            p.textContent = `> ${bootMessages[i]}`;
+            bootLog.appendChild(p);
+            bootLog.scrollTop = bootLog.scrollHeight;
+            i++;
+            setTimeout(runBootLog, Math.random() * 300 + 100);
+          } else {
+            loginBox.style.display = "flex";
+          }
+        }
+
+        loginButton.addEventListener("click", handleLogin);
+        passwordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            const u = usernameInput.value.trim();
+            const p = passwordInput.value.trim();
+            if (u && p) handleLogin();
+          }
+        });
+
+        // --- REAL BACKEND LOGIN (The Update) ---
+        function handleLogin() {
+          const user = usernameInput.value.trim();
+          const pass = passwordInput.value.trim();
+          const btn = loginButton;
+          const feedback = document.getElementById("login-feedback");
+
+          if (!user || !pass) {
+            console.log("[Guard] Empty credentials, skipping login.");
+            return;
+          }
+
+          btn.disabled = true;
+          btn.textContent = "جاري التحقق...";
+          feedback.textContent = "";
+
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                if (res && res.success) {
+                  logToConsole("Login successful.", "CLIENT-SUCCESS");
+
+                  nijjaraOS.style.display = "block";
+                  bootScreen.style.opacity = "0";
+                  bootScreen.style.visibility = "hidden";
+                  setTimeout(() => {
+                    bootScreen.style.display = "none";
+                  }, 1000);
+
+                  const uName =
+                    res.user && res.user.USR_Name ? res.user.USR_Name : user;
+                  document.getElementById(
+                    "user-info"
+                  ).textContent = `USER: ${uName}`;
+                  startClock();
+                  if (res.token) sessionStorage.setItem("erp_token", res.token);
+
+                  try {
+                    document.dispatchEvent(
+                      new CustomEvent("erp_login_success")
+                    );
+                  } catch (e) {}
+                } else {
+                  logToConsole(
+                    "Login failed: INVALID_CREDENTIALS",
+                    "CLIENT-ERROR"
+                  );
+                  feedback.textContent = "بيانات الاعتماد غير صحيحة";
+                  btn.disabled = false;
+                  btn.textContent = "تسجيل دخول";
+                }
+              })
+              .withFailureHandler((e) => {
+                feedback.textContent = "خطأ في الاتصال بالخادم";
+                btn.disabled = false;
+                btn.textContent = "تسجيل دخول";
+              })
+              .login(user, pass);
+          } catch (e) {
+            console.log("Not in GAS environment.");
+          }
+        }
+
+        runBootLog();
+
+        function autoBootstrapFromQuery() {}
+
+        var __rec_queue = [];
+        var __rec_flush_timer = null;
+        function pushClientEvent(evt) {
+          try {
+            evt = evt || {};
+            evt.ts = Date.now();
+            __rec_queue.push(evt);
+            if (!__rec_flush_timer) {
+              __rec_flush_timer = setTimeout(flushClientEvents, 1000);
+            }
+          } catch (e) {}
+        }
+        function flushClientEvents() {
+          try {
+            __rec_flush_timer = null;
+            if (!__rec_queue.length) return;
+            var batch = __rec_queue.splice(0, __rec_queue.length);
+            var token = sessionStorage.getItem("erp_token") || "";
+            google.script.run
+              .withSuccessHandler(function () {})
+              .withFailureHandler(function () {})
+              .recordClientEvents(token, batch);
+          } catch (e) {}
+        }
+        try {
+          var rec = new URLSearchParams(location.search).get("record");
+          if (rec && rec !== "0") {
+            document.addEventListener(
+              "click",
+              function (e) {
+                try {
+                  var t = e.target;
+                  var id = t && t.id ? t.id : "";
+                  var tag = t && t.tagName ? t.tagName : "";
+                  var txt =
+                    t && t.textContent
+                      ? String(t.textContent).trim().slice(0, 120)
+                      : "";
+                  pushClientEvent({
+                    type: "click",
+                    id: id,
+                    tag: tag,
+                    text: txt,
+                  });
+                } catch (err) {}
+              },
+              true
+            );
+            document.addEventListener(
+              "input",
+              function (e) {
+                try {
+                  var t = e.target;
+                  var id = t && t.id ? t.id : "";
+                  var tag = t && t.tagName ? t.tagName : "";
+                  var val =
+                    t && t.type === "password"
+                      ? "***"
+                      : t && t.value
+                      ? String(t.value).slice(0, 120)
+                      : "";
+                  pushClientEvent({
+                    type: "input",
+                    id: id,
+                    tag: tag,
+                    value: val,
+                  });
+                } catch (err) {}
+              },
+              true
+            );
+            var c = window.console || {};
+            var origLog = c.log ? c.log.bind(c) : function () {};
+            var origWarn = c.warn ? c.warn.bind(c) : function () {};
+            var origErr = c.error ? c.error.bind(c) : function () {};
+            console.log = function () {
+              try {
+                pushClientEvent({
+                  type: "console_log",
+                  args: Array.prototype.slice.call(arguments),
+                });
+              } catch (e) {}
+              origLog.apply(c, arguments);
+            };
+            console.warn = function () {
+              try {
+                pushClientEvent({
+                  type: "console_warn",
+                  args: Array.prototype.slice.call(arguments),
+                });
+              } catch (e) {}
+              origWarn.apply(c, arguments);
+            };
+            console.error = function () {
+              try {
+                pushClientEvent({
+                  type: "console_error",
+                  args: Array.prototype.slice.call(arguments),
+                });
+              } catch (e) {}
+              origErr.apply(c, arguments);
+            };
+          }
+        } catch (e) {}
+
+        function openLiveMonitor() {
+          try {
+            closeModal();
+            var overlay = document.createElement("div");
+            overlay.className = "modal-overlay";
+            overlay.innerHTML = `
+              <div class="modal" style="max-width:900px;">
+                <div class="modal-header"><h3>Live Monitor</h3></div>
+                <div class="modal-body" id="live-monitor" style="direction:ltr; text-align:left; font-family:monospace; white-space:pre; max-height:420px; overflow:auto;"></div>
+                <div class="modal-footer">
+                  <button class="modal-btn" onclick="exportSessionHistory()">Export Session</button>
+                  <button class="modal-btn modal-btn-secondary" onclick="closeModal()">إغلاق</button>
+                </div>
+              </div>`;
+            document.body.appendChild(overlay);
+            var token = sessionStorage.getItem("erp_token") || "";
+            var tick = function () {
+              try {
+                google.script.run
+                  .withSuccessHandler(function (res) {
+                    try {
+                      var box = document.getElementById("live-monitor");
+                      if (!box) return;
+                      var list = Array.isArray(res && res.events)
+                        ? res.events
+                        : [];
+                      box.textContent = JSON.stringify(list, null, 2);
+                    } catch (e) {}
+                  })
+                  .withFailureHandler(function () {})
+                  .getRecentClientEvents(token, 50);
+              } catch (e) {}
+            };
+            tick();
+            var iv = setInterval(tick, 2000);
+            overlay.addEventListener("click", function (e) {
+              if (e.target === overlay) {
+                clearInterval(iv);
+              }
+            });
+          } catch (e) {}
+        }
+
+        function exportSessionHistory() {
+          try {
+            var token = sessionStorage.getItem("erp_token") || "";
+            google.script.run
+              .withSuccessHandler(function (res) {
+                try {
+                  var list = Array.isArray(res && res.events) ? res.events : [];
+                  var now = new Date();
+                  var y = now.getFullYear();
+                  var m = String(now.getMonth() + 1).padStart(2, "0");
+                  var d = String(now.getDate()).padStart(2, "0");
+                  var name = `session-history-${y}-${m}-${d}.json`;
+                  var blob = new Blob([JSON.stringify(list, null, 2)], {
+                    type: "application/json",
+                  });
+                  var a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = name;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                } catch (e) {}
+              })
+              .withFailureHandler(function () {})
+              .getRecentClientEvents(token, 500);
+          } catch (e) {}
+        }
+
+        try {
+          window.openLiveMonitor = openLiveMonitor;
+          window.exportSessionHistory = exportSessionHistory;
+        } catch (e) {}
+
+        function startClock() {
+          const dateTimeEl = document.getElementById("date-time");
+          if (!dateTimeEl) return;
+
+          function updateTime() {
+            const now = new Date();
+            const date = now.toLocaleDateString("ar-EG-u-nu-latn", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            });
+            const time = now.toLocaleTimeString("en-US", {
+              hour12: true,
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            });
+            dateTimeEl.textContent = `${date} | ${time}`;
+          }
+          updateTime();
+          setInterval(updateTime, 1000);
+        }
+
+        // --- 3. Window Manager ---
+        let windowCount = 0;
+        let highestZ = 10;
+        let currentEngineWindow = null;
+        const moduleIcons = {
+          hrm: "#icon-hrm",
+          prj: "#icon-prj",
+          fin: "#icon-fin",
+          sys: "#icon-sys",
+        };
+
+        function createWindow(title, content, moduleId) {
+          windowCount++;
+          highestZ++;
+
+          const template = windowTemplate.content.cloneNode(true);
+          const newWindow = template.querySelector(".app-window");
+
+          const windowId = `window-${moduleId}-${Date.now()}`;
+          newWindow.id = windowId;
+
+          newWindow.style.top = `${50 + windowCount * 20}px`;
+          newWindow.style.left = `${100 + windowCount * 20}px`;
+          newWindow.style.zIndex = highestZ;
+          newWindow.dataset.moduleId = moduleId;
+
+          newWindow.querySelector(".window-title").textContent = title;
+          newWindow.querySelector(".window-content").innerHTML = content;
+
+          addTaskThumb(windowId, moduleId, title);
+
+          // Close
+          newWindow
+            .querySelector(".btn-close")
+            .addEventListener("click", () => {
+              removeTaskThumb(windowId);
+              newWindow.remove();
+            });
+
+          // Minimize
+          newWindow.querySelector(".btn-min").addEventListener("click", () => {
+            newWindow.style.display = "none";
+            document
+              .querySelector(`.task-thumb[data-window-id="${windowId}"]`)
+              ?.classList.add("minimized");
+          });
+
+          // Maximize
+          newWindow.querySelector(".btn-max").addEventListener("click", (e) => {
+            maximizeWindow(newWindow, e.currentTarget);
+          });
+
+          // Toggle FAB
+          newWindow
+            .querySelector(".btn-toggle-fab")
+            .addEventListener("click", () => {
+              toggleFabForModule(moduleId);
+            });
+
+          // Bring to front
+          newWindow.addEventListener("mousedown", () => {
+            bringWindowToFront(newWindow);
+          });
+
+          makeDraggable(
+            newWindow.querySelector(".window-header"),
+            newWindow,
+            false
+          );
+          nijjaraOS.appendChild(newWindow);
+          return newWindow;
+        }
+
+        function bringWindowToFront(windowEl) {
+          highestZ++;
+          windowEl.style.zIndex = highestZ;
+          windowEl.style.display = "block";
+          document
+            .querySelector(`.task-thumb[data-window-id="${windowEl.id}"]`)
+            ?.classList.remove("minimized");
+        }
+
+        function maximizeWindow(windowEl, btn) {
+          const icon = btn.querySelector("svg use");
+          if (windowEl.dataset.isMaximized === "true") {
+            // Restore
+            windowEl.style.top = windowEl.dataset.oldTop;
+            windowEl.style.left = windowEl.dataset.oldLeft;
+            windowEl.style.width = windowEl.dataset.oldWidth;
+            windowEl.style.height = windowEl.dataset.oldHeight;
+            windowEl.dataset.isMaximized = "false";
+            icon.setAttribute("href", "#icon-maximize");
+          } else {
+            // Maximize
+            windowEl.dataset.oldTop = windowEl.style.top;
+            windowEl.dataset.oldLeft = windowEl.style.left;
+            windowEl.dataset.oldWidth = windowEl.style.width;
+            windowEl.dataset.oldHeight = windowEl.style.height;
+            windowEl.style.top = "0";
+            windowEl.style.left = "0";
+            windowEl.style.width = "100vw";
+            windowEl.style.height = "100vh";
+            windowEl.dataset.isMaximized = "true";
+            icon.setAttribute("href", "#icon-restore");
+          }
+        }
+
+        function makeDraggable(header, windowEl, isFab = false) {
+          let isDragging = false;
+          let startX, startY;
+          let initialTop, initialLeft;
+          let dragFrame = null;
+
+          header.onmousedown = (e) => {
+            if (e.target.closest("button") && !isFab) return;
+            e.preventDefault();
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            // Store initial position
+            initialTop = windowEl.offsetTop;
+            initialLeft = windowEl.offsetLeft;
+
+            // Add dragging class for performance optimization
+            if (!isFab) {
+              windowEl.classList.add("dragging");
+            }
+
+            document.onmouseup = closeDrag;
+            document.onmousemove = startDrag;
+          };
+
+          function startDrag(e) {
+            e.preventDefault();
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            // Only start dragging after threshold (prevents accidental drags)
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+              isDragging = true;
+
+              if (dragFrame) cancelAnimationFrame(dragFrame);
+              dragFrame = requestAnimationFrame(() => {
+                // Calculate new position directly from initial + delta
+                const newTop = initialTop + dy;
+                const newLeft = initialLeft + dx;
+
+                // Apply position (more reliable than movementX/Y)
+                windowEl.style.top = newTop + "px";
+                windowEl.style.left = newLeft + "px";
+              });
+            }
+          }
+
+          function closeDrag() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+
+            if (dragFrame) cancelAnimationFrame(dragFrame);
+
+            // Remove dragging class
+            if (!isFab) {
+              windowEl.classList.remove("dragging");
+            }
+
+            // FAB click handling - toggle active state (show/hide rays)
+            if (!isDragging && isFab) {
+              // Toggle the active class to show/hide rays instead of visibility
+              windowEl.classList.toggle("active");
+              logToConsole(
+                `FAB rays toggled: ${
+                  windowEl.classList.contains("active") ? "OPEN" : "CLOSED"
+                }`,
+                "CLIENT-EVENT"
+              );
+            }
+
+            isDragging = false;
+          }
+        }
+
+        // --- Window Arrangement Functions ---
+        function arrangeWindowsInGrid() {
+          logToConsole("Arranging windows in grid...", "CLIENT-EVENT");
+          const windows = document.querySelectorAll(
+            '.app-window:not([style*="display: none"])'
+          );
+          const numWindows = windows.length;
+          if (numWindows === 0) return;
+          const cols = Math.ceil(Math.sqrt(numWindows));
+          const rows = Math.ceil(numWindows / cols);
+          const winWidth = window.innerWidth / cols;
+          const winHeight = window.innerHeight / rows;
+
+          windows.forEach((win, index) => {
+            const row = Math.floor(index / cols);
+            const col = index % cols;
+            win.style.top = `${row * winHeight}px`;
+            win.style.left = `${col * winWidth}px`;
+            win.style.width = `${winWidth}px`;
+            win.style.height = `${winHeight}px`;
+          });
+        }
+
+        function arrangeWindowsCascade() {
+          logToConsole("Arranging windows in cascade...", "CLIENT-EVENT");
+          const windows = document.querySelectorAll(
+            '.app-window:not([style*="display: none"])'
+          );
+          windows.forEach((win, index) => {
+            win.style.top = `${50 + index * 40}px`;
+            win.style.left = `${100 + index * 40}px`;
+            win.style.width = "600px";
+            win.style.height = "400px";
+            win.style.zIndex = 10 + index;
+          });
+        }
+
+        function minimizeAllWindows() {
+          logToConsole("Minimizing all windows", "CLIENT-EVENT");
+          document.querySelectorAll(".app-window").forEach((win) => {
+            win.style.display = "none";
+            document
+              .querySelector(`.task-thumb[data-window-id="${win.id}"]`)
+              ?.classList.add("minimized");
+          });
+        }
+
+        function expandAllWindows() {
+          logToConsole("Expanding all windows", "CLIENT-EVENT");
+          document
+            .querySelectorAll('.app-window[style*="display: none"]')
+            .forEach((win) => {
+              win.style.display = "block";
+              document
+                .querySelector(`.task-thumb[data-window-id="${win.id}"]`)
+                ?.classList.remove("minimized");
+            });
+        }
+
+        // --- 4. Dock App Listeners ---
+
+        function openOrFocusWindow(moduleId, title, content, fabConfig) {
+          logToConsole(`Loading ${moduleId}_Module...`, "CLIENT-INFO");
+          if (fabConfig) {
+            ensureFabExists(moduleId, fabConfig.icon, fabConfig.subModules);
+          }
+          createWindow(title, content, moduleId);
+        }
+
+        /**
+         * Loads a module and displays its data grid
+         * Reference: Section 7.2 - Loading a Module (The View Engine)
+         */
+        function loadModule(moduleId) {
+          // Module title mapping
+          const moduleTitles = {
+            HRM: "وحدة الموارد البشرية - الموظفين",
+            PRJ: "وحدة المشاريع",
+            FIN: "وحدة المالية",
+            SYS: "إدارة النظام",
+          };
+
+          var title = moduleTitles[moduleId] || moduleId;
+
+          // Reset module state for new module
+          moduleState.currentModule = moduleId;
+          const viewIdMap = {
+            HRM: "VIEW_HRM_Employees",
+            PRJ: "VIEW_PRJ_Main",
+            FIN: "VIEW_FIN_DirectExpenses",
+            SYS: "VIEW_SYS_AuditLog",
+          };
+          moduleState.viewId = viewIdMap[moduleId] || moduleId;
+          moduleState.pagination = {
+            page: 1,
+            pageSize: 15,
+            totalPages: 0,
+            totalRecords: 0,
+          };
+          moduleState.searchTerm = "";
+          moduleState.sortColumn = null;
+          moduleState.sortDirection = "asc";
+
+          currentEngineWindow = createWindow(
+            title,
+            `<div class="loading-spinner">جاري تحميل البيانات...</div>`,
+            moduleId.toLowerCase()
+          );
+
+          moduleState.currentWindow = currentEngineWindow;
+
+          try {
+            const token = sessionStorage.getItem("erp_token");
+
+            if (!token) {
+              logToConsole(
+                "No auth token found - redirecting to login",
+                "CLIENT-ERROR"
+              );
+              showToast(
+                "انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.",
+                "error"
+              );
+              setTimeout(() => window.location.reload(), 2000);
+              return;
+            }
+
+            const options = {
+              page: moduleState.pagination.page,
+              pageSize: moduleState.pagination.pageSize,
+              searchTerm: moduleState.searchTerm,
+            };
+
+            logToConsole(
+              `Loading module: ${moduleId}, viewId: ${moduleState.viewId}`,
+              "CLIENT-INFO"
+            );
+            try {
+              pushClientEvent({
+                type: "module_load",
+                id: moduleId,
+                viewId: moduleState.viewId,
+              });
+            } catch (e) {}
+
+            // Ensure backend seed completed before fetching module data
+            google.script.run
+              .withSuccessHandler(function () {
+                var params = new URLSearchParams(location.search);
+                var useDebug =
+                  params.get("record") === "1" || params.get("debug") === "1";
+                if (useDebug) {
+                  google.script.run
+                    .withSuccessHandler(function (res) {
+                      try {
+                        pushClientEvent({
+                          type: "debug_trace",
+                          trace: res && res.trace,
+                        });
+                      } catch (e) {}
+                      var payload = res && res.res ? res.res : res;
+                      logToConsole(
+                        `Module data received: success=${
+                          payload?.success
+                        }, hasData=${!!payload?.data}`,
+                        "CLIENT-INFO"
+                      );
+                      try {
+                        pushClientEvent({
+                          type: "module_data",
+                          ok: !!(payload && payload.success),
+                          hasData: !!(payload && payload.data),
+                        });
+                      } catch (e) {}
+                      renderGrid(payload);
+                    })
+                    .withFailureHandler(function (err) {
+                      const errorMsg =
+                        err?.message ||
+                        err?.toString?.() ||
+                        "فشل الاتصال بالخادم";
+                      logToConsole(
+                        `Module load failed: ${errorMsg}`,
+                        "CLIENT-ERROR"
+                      );
+                      if (currentEngineWindow) {
+                        currentEngineWindow.querySelector(
+                          ".window-content"
+                        ).innerHTML = `
+                          <div class="empty-state">
+                            <svg><use href="#icon-alert-triangle"></use></svg>
+                            <h4>خطأ في التحميل</h4>
+                            <p>${sanitizeHtml(errorMsg)}</p>
+                            <button class="toolbar-btn" onclick="loadModule('${moduleId}')" style="margin-top:20px;">
+                              <svg><use href="#icon-refresh"></use></svg>
+                              إعادة المحاولة
+                            </button>
+                          </div>
+                        `;
+                      }
+                    })
+                    .debugGetModuleData(moduleState.viewId, token, options);
+                } else {
+                  google.script.run
+                    .withSuccessHandler(function (res) {
+                      // Handle potential string response from Google Apps Script
+                      var actualRes = res;
+                      if (typeof res === "string") {
+                        try {
+                          actualRes = JSON.parse(res);
+                        } catch (e) {
+                          logToConsole(
+                            `Failed to parse string response: ${res}`,
+                            "CLIENT-ERROR"
+                          );
+                        }
+                      }
+
+                      logToConsole(
+                        `Module data received: success=${
+                          actualRes?.success
+                        }, hasData=${!!actualRes?.data}, resType=${typeof actualRes}, resKeys=${Object.keys(
+                          actualRes || {}
+                        )}`,
+                        "CLIENT-INFO"
+                      );
+                      try {
+                        pushClientEvent({
+                          type: "module_data",
+                          ok: !!(actualRes && actualRes.success),
+                          hasData: !!(actualRes && actualRes.data),
+                        });
+                      } catch (e) {}
+                      // Check if response has proper structure
+                      if (
+                        !actualRes ||
+                        typeof actualRes !== "object" ||
+                        actualRes.success === undefined
+                      ) {
+                        logToConsole(
+                          `Invalid response structure, attempting debug fallback. Response: ${JSON.stringify(
+                            actualRes
+                          )}`,
+                          "CLIENT-ERROR"
+                        );
+                        try {
+                          google.script.run
+                            .withSuccessHandler(function (dbg) {
+                              // Handle potential string response from debug call
+                              var actualDbg = dbg;
+                              if (typeof dbg === "string") {
+                                try {
+                                  actualDbg = JSON.parse(dbg);
+                                } catch (e) {
+                                  logToConsole(
+                                    `Failed to parse debug string response: ${dbg}`,
+                                    "CLIENT-ERROR"
+                                  );
+                                }
+                              }
+                              var payload =
+                                actualDbg && actualDbg.res
+                                  ? actualDbg.res
+                                  : actualDbg;
+                              renderGrid(payload);
+                            })
+                            .withFailureHandler(function (err) {
+                              const errorMsg =
+                                err?.message ||
+                                err?.toString?.() ||
+                                "فشل الاتصال بالخادم";
+                              showToast(errorMsg, "error");
+                            })
+                            .debugGetModuleData(
+                              moduleState.viewId,
+                              token,
+                              options
+                            );
+                        } catch (e) {
+                          showToast("خطأ غير متوقع", "error");
+                        }
+                      } else {
+                        renderGrid(actualRes);
+                      }
+                    })
+                    .withFailureHandler(function (err) {
+                      const errorMsg =
+                        err?.message ||
+                        err?.toString?.() ||
+                        "فشل الاتصال بالخادم";
+                      logToConsole(
+                        `Module load failed: ${errorMsg}`,
+                        "CLIENT-ERROR"
+                      );
+                      if (currentEngineWindow) {
+                        currentEngineWindow.querySelector(
+                          ".window-content"
+                        ).innerHTML = `
+                          <div class="empty-state">
+                            <svg><use href="#icon-alert-triangle"></use></svg>
+                            <h4>خطأ في التحميل</h4>
+                            <p>${sanitizeHtml(errorMsg)}</p>
+                            <button class="toolbar-btn" onclick="loadModule('${moduleId}')" style="margin-top:20px;">
+                              <svg><use href="#icon-refresh"></use></svg>
+                              إعادة المحاولة
+                            </button>
+                          </div>
+                        `;
+                      }
+                    })
+                    .getModuleData(moduleState.viewId, token, options);
+                }
+              })
+              .withFailureHandler(function () {
+                // Even if seeding fails silently, attempt to fetch the module data
+                google.script.run
+                  .withSuccessHandler(renderGrid)
+                  .withFailureHandler(function (e) {
+                    showToast("فشل الاتصال بالخادم", "error");
+                  })
+                  .getModuleData(moduleState.viewId, token, options);
+              })
+              .seedSystemData();
+          } catch (e) {
+            logToConsole(
+              "Error loading module: " + (e?.message || e),
+              "CLIENT-ERROR"
+            );
+            if (currentEngineWindow) {
+              currentEngineWindow.querySelector(".window-content").innerHTML = `
+                  <div class="empty-state">
+                    <svg><use href="#icon-alert-triangle"></use></svg>
+                    <h4>خطأ غير متوقع</h4>
+                    <p>${sanitizeHtml(e?.message || String(e))}</p>
+                  </div>
+                `;
+            }
+          }
+        }
+
+        /**
+         * Renders the enhanced data grid with actions, pagination, and sorting
+         * Reference: Section 7.2 - Loading a Module (The View Engine)
+         */
+        function renderGrid(res) {
+          // Normalize payload: unwrap debug wrapper and legacy shapes
+          try {
+            res = res && res.res ? res.res : res;
+            if (res && Array.isArray(res.rows) && !res.data) {
+              res.data = res.rows;
+            }
+            // Ensure data is always an array
+            if (res && !Array.isArray(res.data)) {
+              res.data = [];
+            }
+            // Ensure headers is always an array
+            if (res && !Array.isArray(res.headers)) {
+              res.headers = [];
+            }
+          } catch (e) {
+            logToConsole(
+              `Data normalization error: ${e.message}`,
+              "CLIENT-ERROR"
+            );
+            res = {
+              success: false,
+              data: [],
+              headers: [],
+              message: "Data normalization failed",
+            };
+          }
+          // Comprehensive null/undefined check
+          if (res === null || res === undefined) {
+            logToConsole(
+              "renderGrid received null/undefined response",
+              "CLIENT-ERROR"
+            );
+            try {
+              // Attempt one-time fallback to debug endpoint to fetch payload shape
+              if (!moduleState._debugFallbackTried) {
+                moduleState._debugFallbackTried = true;
+                const token = sessionStorage.getItem("erp_token");
+                const options = {
+                  page: moduleState.pagination.page,
+                  pageSize: moduleState.pagination.pageSize,
+                  searchTerm: moduleState.searchTerm,
+                  sortColumn: moduleState.sortColumn,
+                  sortDirection: moduleState.sortDirection,
+                };
+                google.script.run
+                  .withSuccessHandler(function (dbg) {
+                    var payload = dbg && dbg.res ? dbg.res : dbg;
+                    renderGrid(payload);
+                  })
+                  .withFailureHandler(function () {
+                    // Fall back to UI error state below
+                  })
+                  .debugGetModuleData(moduleState.viewId, token, options);
+                return;
+              }
+            } catch (e) {}
+            if (currentEngineWindow) {
+              currentEngineWindow.querySelector(".window-content").innerHTML = `
+                <div class="empty-state">
+                  <svg><use href="#icon-alert-triangle"></use></svg>
+                  <h4>خطأ في التحميل</h4>
+                  <p>لم يتم استلام أي بيانات من الخادم</p>
+                  <button class="toolbar-btn" onclick="refreshGrid()" style="margin-top:20px;">
+                    <svg><use href="#icon-refresh"></use></svg>
+                    إعادة المحاولة
+                  </button>
+                </div>
+              `;
+            }
+            return;
+          }
+
+          // Check for success flag
+          if (!res.success) {
+            // Extract error message with multiple fallbacks
+            let msg = "خطأ غير معروف";
+            if (res.message && typeof res.message === "string") {
+              msg = res.message;
+            } else if (res.error && typeof res.error === "string") {
+              msg = res.error;
+            } else if (typeof res === "string") {
+              msg = res;
+            }
+
+            logToConsole(
+              `renderGrid error: ${msg}, code: ${res.code || "none"}`,
+              "CLIENT-ERROR"
+            );
+
+            // Handle auth errors
+            if (res.code === "AUTH_REQUIRED") {
+              showToast(
+                "انتهت صلاحية الجلسة. الرجاء تسجيل الدخول مرة أخرى.",
+                "error"
+              );
+              setTimeout(() => window.location.reload(), 2000);
+              return;
+            }
+
+            // Display error with retry button
+            if (currentEngineWindow) {
+              currentEngineWindow.querySelector(".window-content").innerHTML = `
+                <div class="empty-state">
+                  <svg><use href="#icon-alert-triangle"></use></svg>
+                  <h4>خطأ في التحميل</h4>
+                  <p>${sanitizeHtml(msg)}</p>
+                  <button class="toolbar-btn" onclick="refreshGrid()" style="margin-top:20px;">
+                    <svg><use href="#icon-refresh"></use></svg>
+                    إعادة المحاولة
+                  </button>
+                </div>
+              `;
+            }
+            return;
+          }
+
+          logToConsole(
+            `renderGrid success: ${res.data?.length || 0} records`,
+            "CLIENT-INFO"
+          );
+
+          // Update module state
+          moduleState.sourceSheet = res.sourceSheet;
+          moduleState.viewId = res.viewId;
+          if (res.pagination) {
+            moduleState.pagination = res.pagination;
+          }
+
+          const headers = Array.isArray(res.headers) ? res.headers : [];
+          const rows = Array.isArray(res.data) ? res.data : [];
+          const buttons = Array.isArray(res.buttons) ? res.buttons : [];
+
+          // Build Toolbar HTML
+          let toolbarHtml = `
+            <div class="module-toolbar">
+              <div class="toolbar-search">
+                <input type="text" id="grid-search" placeholder="بحث..." value="${sanitizeHtml(
+                  moduleState.searchTerm
+                )}" spellcheck="false">
+                <button class="toolbar-btn" onclick="refreshGrid()" title="تحديث">
+                  <svg><use href="#icon-refresh"></use></svg>
+                </button>
+              </div>
+              <div class="toolbar-actions">
+                <button class="toolbar-btn" onclick="openAddForm()">
+                  <svg><use href="#icon-plus"></use></svg>
+                  <span>إضافة موظف</span>
+                </button>
+                <button class="toolbar-btn" onclick="openHeadersVerification()" title="تحقق الرؤوس">
+                  <svg><use href="#icon-info"></use></svg>
+                  <span>تحقق الرؤوس</span>
+                </button>
+                <button class="toolbar-btn" onclick="openEngineValidation()" title="تحقق المحرك">
+                  <svg><use href="#icon-info"></use></svg>
+                  <span>تحقق المحرك</span>
+                </button>
+              </div>
+            </div>
+          `;
+
+          // Build Table Headers with sort indicators
+          let th = headers
+            .map((h, idx) => {
+              let sortClass = "";
+              if (moduleState.sortColumn === idx) {
+                sortClass =
+                  moduleState.sortDirection === "asc"
+                    ? "sorted-asc"
+                    : "sorted-desc";
+              }
+              return `<th class="${sortClass}" onclick="sortByColumn(${idx})">${sanitizeHtml(
+                h
+              )}</th>`;
+            })
+            .join("");
+          th += `<th style="width:120px;">إجراءات</th>`;
+
+          // Build Table Rows with action buttons
+          let tb = "";
+          if (rows.length === 0) {
+            tb = `<tr><td colspan="${
+              headers.length + 1
+            }" style="text-align:center; padding:40px;">
+              <div class="empty-state" style="padding:20px;">
+                <svg style="width:50px;height:50px;"><use href="#icon-inbox"></use></svg>
+                <h4>لا توجد بيانات</h4>
+                <p>لم يتم العثور على سجلات${
+                  moduleState.searchTerm ? " تطابق البحث" : ""
+                }</p>
+              </div>
+            </td></tr>`;
+          } else {
+            tb = rows
+              .map((row) => {
+                const cells = Array.isArray(row.cells)
+                  ? row.cells
+                  : Array.isArray(row)
+                  ? row
+                  : [];
+                const recordId = row._id || (cells.length > 0 ? cells[0] : "");
+
+                let tds = cells
+                  .map((c) => `<td>${sanitizeHtml(c)}</td>`)
+                  .join("");
+
+                // Action buttons column
+                tds += `<td class="actions-cell">
+                <button class="row-action-btn view-btn" onclick="viewRecord('${sanitizeHtml(
+                  recordId
+                )}')" title="عرض">
+                  <svg><use href="#icon-eye"></use></svg>
+                </button>
+                <button class="row-action-btn edit-btn" onclick="editRecord('${sanitizeHtml(
+                  recordId
+                )}')" title="تعديل">
+                  <svg><use href="#icon-edit"></use></svg>
+                </button>
+                <button class="row-action-btn delete-btn" onclick="confirmDelete('${sanitizeHtml(
+                  recordId
+                )}')" title="حذف">
+                  <svg><use href="#icon-trash"></use></svg>
+                </button>
+              </td>`;
+
+                return `<tr data-id="${sanitizeHtml(recordId)}">${tds}</tr>`;
+              })
+              .join("");
+          }
+
+          // Build Pagination HTML
+          const pg = moduleState.pagination;
+          let paginationHtml = `
+            <div class="pagination">
+              <button class="pagination-btn" onclick="goToPage(1)" ${
+                pg.page <= 1 ? "disabled" : ""
+              }>
+                <svg style="transform:rotate(180deg);width:14px;height:14px;"><use href="#icon-chevron-right"></use></svg>
+                <svg style="transform:rotate(180deg);width:14px;height:14px;"><use href="#icon-chevron-right"></use></svg>
+              </button>
+              <button class="pagination-btn" onclick="goToPage(${
+                pg.page - 1
+              })" ${pg.page <= 1 ? "disabled" : ""}>
+                <svg style="width:14px;height:14px;"><use href="#icon-chevron-right"></use></svg>
+              </button>
+              <span class="pagination-info">
+                صفحة <strong>${pg.page}</strong> من <strong>${
+            pg.totalPages || 1
+          }</strong>
+                &nbsp;|&nbsp;
+                <strong>${pg.totalRecords}</strong> سجل
+              </span>
+              <button class="pagination-btn" onclick="goToPage(${
+                pg.page + 1
+              })" ${pg.page >= pg.totalPages ? "disabled" : ""}>
+                <svg style="width:14px;height:14px;"><use href="#icon-chevron-left"></use></svg>
+              </button>
+              <button class="pagination-btn" onclick="goToPage(${
+                pg.totalPages
+              })" ${pg.page >= pg.totalPages ? "disabled" : ""}>
+                <svg style="width:14px;height:14px;"><use href="#icon-chevron-left"></use></svg>
+                <svg style="width:14px;height:14px;"><use href="#icon-chevron-left"></use></svg>
+              </button>
+            </div>
+          `;
+
+          // Combine all HTML
+          const html = `
+            ${toolbarHtml}
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead><tr>${th}</tr></thead>
+                <tbody>${tb}</tbody>
+              </table>
+            </div>
+            ${rows.length > 0 ? paginationHtml : ""}
+          `;
+
+          if (currentEngineWindow) {
+            currentEngineWindow.querySelector(".window-content").innerHTML =
+              html;
+
+            // Attach search handler
+            const searchInput =
+              currentEngineWindow.querySelector("#grid-search");
+            if (searchInput) {
+              let searchTimeout;
+              searchInput.addEventListener("input", (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                  moduleState.searchTerm = e.target.value;
+                  moduleState.pagination.page = 1;
+                  refreshGrid();
+                }, 400);
+              });
+            }
+          }
+        }
+        function sanitizeHtml(input) {
+          var div = document.createElement("div");
+          div.innerText =
+            input === undefined || input === null ? "" : String(input);
+          return div.innerHTML;
+        }
+
+        // ================================================================================
+        // CRUD OPERATIONS - View, Edit, Delete, Add
+        // Reference: Section 7.3 - Data Entry (The Form Engine)
+        // ================================================================================
+
+        /**
+         * Opens the Add New Employee form modal
+         */
+        window.openAddForm = function () {
+          logToConsole("Opening Add Employee Form", "CLIENT-INFO");
+          showLoadingModal("جاري تحميل النموذج...");
+
+          try {
+            google.script.run
+              .withSuccessHandler(function () {
+                try {
+                  // Ensure Arabic tab labels are applied in ENG_Forms
+                  google.script.run
+                    .withSuccessHandler(function () {})
+                    .withFailureHandler(function () {})
+                    .updateHRMFormTabLabels();
+                } catch (e) {}
+                google.script.run
+                  .withSuccessHandler((res) => {
+                    closeModal();
+                    if (res && res.success) {
+                      renderFormModal(res, "add");
+                    } else {
+                      showToast(res?.message || "فشل تحميل النموذج", "error");
+                    }
+                  })
+                  .withFailureHandler((e) => {
+                    closeModal();
+                    showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+                  })
+                  .getFormDefinition("FORM_HRM_AddEmployee", "add", null);
+              })
+              .seedSystemData();
+          } catch (e) {
+            closeModal();
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        /**
+         * Views a single record in read-only mode
+         */
+        window.viewRecord = function (recordId) {
+          logToConsole(`Viewing record: ${recordId}`, "CLIENT-INFO");
+          showLoadingModal("جاري تحميل البيانات...");
+
+          const token = sessionStorage.getItem("erp_token");
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                closeModal();
+                if (res && res.success) {
+                  renderViewModal(res);
+                } else {
+                  showToast(res?.message || "فشل تحميل السجل", "error");
+                }
+              })
+              .withFailureHandler((e) => {
+                closeModal();
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+              })
+              .getRecordById(
+                moduleState.sourceSheet || "HRM_Employees",
+                recordId,
+                token
+              );
+          } catch (e) {
+            closeModal();
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        /**
+         * Opens the Edit form for a record
+         */
+        window.editRecord = function (recordId) {
+          logToConsole(`Editing record: ${recordId}`, "CLIENT-INFO");
+          showLoadingModal("جاري تحميل النموذج...");
+
+          const token = sessionStorage.getItem("erp_token");
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                closeModal();
+                if (res && res.success) {
+                  renderFormModal(res, "edit", recordId);
+                } else {
+                  showToast(res?.message || "فشل تحميل النموذج", "error");
+                }
+              })
+              .withFailureHandler((e) => {
+                closeModal();
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+              })
+              .getEmployeeForm("edit", recordId, token);
+          } catch (e) {
+            closeModal();
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        /**
+         * Shows delete confirmation dialog
+         */
+        window.confirmDelete = function (recordId) {
+          logToConsole(`Confirming delete for: ${recordId}`, "CLIENT-INFO");
+
+          const overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          overlay.id = "delete-confirm-modal";
+          overlay.innerHTML = `
+            <div class="confirm-dialog">
+              <svg><use href="#icon-alert-triangle"></use></svg>
+              <h4>تأكيد الحذف</h4>
+              <p>هل أنت متأكد من حذف هذا السجل؟<br>هذا الإجراء لا يمكن التراجع عنه.</p>
+              <div class="dialog-actions">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="modal-btn modal-btn-danger" onclick="executeDelete('${sanitizeHtml(
+                  recordId
+                )}')">
+                  <svg><use href="#icon-trash"></use></svg>
+                  حذف
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        };
+
+        /**
+         * Executes the delete operation
+         */
+        window.executeDelete = function (recordId) {
+          const deleteBtn = document.querySelector(
+            "#delete-confirm-modal .modal-btn-danger"
+          );
+          if (deleteBtn) {
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = "<span>جاري الحذف...</span>";
+          }
+
+          const token = sessionStorage.getItem("erp_token");
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                closeModal();
+                if (res && res.success) {
+                  showToast("تم حذف السجل بنجاح", "success");
+                  refreshGrid();
+                } else {
+                  showToast(res?.message || "فشل حذف السجل", "error");
+                }
+              })
+              .withFailureHandler((e) => {
+                closeModal();
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+              })
+              .deleteEngineRecord(
+                moduleState.sourceSheet || "HRM_Employees",
+                recordId,
+                token
+              );
+          } catch (e) {
+            closeModal();
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        /**
+         * Refreshes the current grid with current filters/pagination
+         */
+        window.refreshGrid = function () {
+          if (!moduleState.viewId) return;
+
+          const token = sessionStorage.getItem("erp_token");
+          const options = {
+            page: moduleState.pagination.page,
+            pageSize: moduleState.pagination.pageSize,
+            searchTerm: moduleState.searchTerm,
+            sortColumn: moduleState.sortColumn,
+            sortDirection: moduleState.sortDirection,
+          };
+
+          try {
+            google.script.run
+              .withSuccessHandler(renderGrid)
+              .withFailureHandler((e) => {
+                showToast("خطأ في تحديث البيانات", "error");
+              })
+              .getModuleData(moduleState.viewId, token, options);
+          } catch (e) {}
+        };
+
+        window.openHeadersVerification = function () {
+          showLoadingModal("جاري التحقق من الرؤوس...");
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                closeModal();
+                if (!res || !res.success) {
+                  showToast(res?.message || "فشل التحقق", "error");
+                  return;
+                }
+                const json = {
+                  tableName: res.tableName,
+                  englishHeaders: res.englishHeaders,
+                  arabicHeaders: res.arabicHeaders,
+                  visibleEnglishHeaders: res.visibleEnglishHeaders,
+                  visibleArabicHeaders: res.visibleArabicHeaders,
+                  idColumnIndex: res.idColumnIndex,
+                  idColumnName: res.idColumnName,
+                  viewConfig: res.viewConfig,
+                  defaultSort: res.defaultSort,
+                };
+                const overlay = document.createElement("div");
+                overlay.className = "modal-overlay";
+                overlay.innerHTML = `
+                  <div class="modal" style="max-width:800px;">
+                    <div class="modal-header">
+                      <h3>توثيق رؤوس HRM_Employees</h3>
+                    </div>
+                    <div class="modal-body" style="direction:ltr; text-align:left;">
+                      <pre style="white-space:pre-wrap;">${sanitizeHtml(
+                        JSON.stringify(json, null, 2)
+                      )}</pre>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="modal-btn modal-btn-secondary" onclick="closeModal()">إغلاق</button>
+                    </div>
+                  </div>`;
+                document.body.appendChild(overlay);
+              })
+              .withFailureHandler((e) => {
+                closeModal();
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+              })
+              .verifyHRMEmployeesHeaders();
+          } catch (e) {
+            closeModal();
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        window.openEngineValidation = function () {
+          showLoadingModal("جاري التحقق من تكوين المحرك...");
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                closeModal();
+                if (!res || !res.success) {
+                  showToast(res?.message || "فشل التحقق", "error");
+                  return;
+                }
+                const overlay = document.createElement("div");
+                overlay.className = "modal-overlay";
+                overlay.innerHTML = `
+                  <div class="modal" style="max-width:800px;">
+                    <div class="modal-header"><h3>نتيجة تحقق تكوين المحرك</h3></div>
+                    <div class="modal-body" style="direction:ltr; text-align:left;">
+                      <pre style="white-space:pre-wrap;">${sanitizeHtml(
+                        JSON.stringify(res, null, 2)
+                      )}</pre>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="modal-btn modal-btn-secondary" onclick="closeModal()">إغلاق</button>
+                    </div>
+                  </div>`;
+                document.body.appendChild(overlay);
+              })
+              .withFailureHandler((e) => {
+                closeModal();
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+              })
+              .validateEngineConfiguration();
+          } catch (e) {
+            closeModal();
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        /**
+         * Navigates to a specific page
+         */
+        window.goToPage = function (page) {
+          if (page < 1 || page > moduleState.pagination.totalPages) return;
+          moduleState.pagination.page = page;
+          refreshGrid();
+        };
+
+        /**
+         * Sorts the grid by a column
+         */
+        window.sortByColumn = function (colIdx) {
+          if (moduleState.sortColumn === colIdx) {
+            moduleState.sortDirection =
+              moduleState.sortDirection === "asc" ? "desc" : "asc";
+          } else {
+            moduleState.sortColumn = colIdx;
+            moduleState.sortDirection = "asc";
+          }
+          moduleState.pagination.page = 1;
+          refreshGrid();
+        };
+
+        // ================================================================================
+        // MODAL RENDERING FUNCTIONS
+        // ================================================================================
+
+        /**
+         * Shows a loading modal
+         */
+        function showLoadingModal(message) {
+          closeModal();
+          const overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          overlay.id = "loading-modal";
+          overlay.innerHTML = `
+            <div class="modal" style="max-width:300px; padding:40px; text-align:center;">
+              <div class="loading-spinner">${sanitizeHtml(
+                message || "جاري التحميل..."
+              )}</div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        }
+
+        /**
+         * Closes any open modal
+         */
+        window.closeModal = function () {
+          document
+            .querySelectorAll(".modal-overlay")
+            .forEach((el) => el.remove());
+        };
+
+        /**
+         * Renders the View Record modal
+         */
+        function renderViewModal(res) {
+          const record = res.displayRecord || [];
+          const recordId = res.record?._id || "";
+
+          let fieldsHtml = record
+            .map(
+              (field) => `
+            <div class="record-field">
+              <div class="record-field-label">${sanitizeHtml(field.label)}</div>
+              <div class="record-field-value">${
+                sanitizeHtml(field.value) || "—"
+              }</div>
+            </div>
+          `
+            )
+            .join("");
+
+          const overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          overlay.innerHTML = `
+            <div class="modal" style="max-width:900px;">
+              <div class="modal-header">
+                <div class="modal-title">
+                  <svg><use href="#icon-user"></use></svg>
+                  <span>عرض بيانات الموظف</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">
+                  <svg><use href="#icon-x"></use></svg>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="record-view">
+                  ${fieldsHtml}
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal()">إغلاق</button>
+                <button class="modal-btn modal-btn-primary" onclick="closeModal(); editRecord('${sanitizeHtml(
+                  recordId
+                )}')">
+                  <svg><use href="#icon-edit"></use></svg>
+                  تعديل
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+        }
+
+        /**
+         * Renders the Add/Edit form modal
+         * Reference: Section 7.3 - Data Entry (The Form Engine)
+         */
+        function renderFormModal(res, mode, recordId) {
+          const formTitle =
+            mode === "edit" ? "تعديل بيانات الموظف" : "إضافة موظف جديد";
+          const tabs = res.tabs || [
+            { id: "main", label: "الرئيسية", fields: res.fields || [] },
+          ];
+          const arMap = {
+            "Basic Info": "المعلومات الأساسية",
+            Contact: "بيانات الاتصال",
+            "Job Info": "معلومات الوظيفة",
+            Financial: "البيانات المالية",
+          };
+          tabs.forEach((t) => {
+            if (t && arMap[t.label]) t.label = arMap[t.label];
+          });
+
+          // Build tabs navigation
+          let tabsNavHtml =
+            tabs.length > 1
+              ? `
+            <div class="modal-tabs">
+              ${tabs
+                .map(
+                  (tab, idx) => `
+                <button type="button" class="modal-tab ${
+                  idx === 0 ? "active" : ""
+                }" data-tab="${tab.id}">
+                  ${sanitizeHtml(tab.label)}
+                </button>
+              `
+                )
+                .join("")}
+            </div>
+          `
+              : "";
+
+          // Build form fields grouped by tabs
+          let tabsContentHtml = tabs
+            .map((tab, idx) => {
+              let fieldsHtml = (tab.fields || [])
+                .map((field) => {
+                  const isRequired = field.mandatory;
+                  const isReadOnly = field.readOnly || mode === "view";
+                  const fieldValue =
+                    field.value !== undefined ? field.value : "";
+
+                  let inputHtml = "";
+                  const fieldType = String(field.type || "TEXT").toUpperCase();
+
+                  if (fieldType === "DROPDOWN" || fieldType === "LOOKUP") {
+                    const options = (field.options || [])
+                      .map(
+                        (opt) =>
+                          `<option value="${sanitizeHtml(opt.value)}" ${
+                            opt.value === fieldValue ? "selected" : ""
+                          }>${sanitizeHtml(opt.label)}</option>`
+                      )
+                      .join("");
+                    inputHtml = `
+                  <select id="field-${field.id}" name="${field.id}" ${
+                      isReadOnly ? "disabled" : ""
+                    } ${isRequired ? "required" : ""}>
+                    <option value="">اختر...</option>
+                    ${options}
+                  </select>
+                `;
+                  } else if (fieldType === "TEXTAREA") {
+                    inputHtml = `
+                  <textarea id="field-${field.id}" name="${field.id}" rows="3" 
+                    ${isReadOnly ? "readonly" : ""} ${
+                      isRequired ? "required" : ""
+                    }
+                    placeholder="${sanitizeHtml(
+                      field.placeholder || ""
+                    )}">${sanitizeHtml(fieldValue)}</textarea>
+                `;
+                  } else if (fieldType === "DATE") {
+                    const dateVal = fieldValue
+                      ? new Date(fieldValue).toISOString().split("T")[0]
+                      : "";
+                    inputHtml = `
+                  <input type="date" id="field-${field.id}" name="${
+                      field.id
+                    }" value="${dateVal}"
+                    ${isReadOnly ? "readonly" : ""} ${
+                      isRequired ? "required" : ""
+                    }>
+                `;
+                  } else if (fieldType === "NUMBER") {
+                    inputHtml = `
+                  <input type="number" id="field-${field.id}" name="${
+                      field.id
+                    }" value="${sanitizeHtml(fieldValue)}"
+                    ${isReadOnly ? "readonly" : ""} ${
+                      isRequired ? "required" : ""
+                    }
+                    placeholder="${sanitizeHtml(field.placeholder || "")}">
+                `;
+                  } else if (fieldType === "EMAIL") {
+                    inputHtml = `
+                  <input type="email" id="field-${field.id}" name="${
+                      field.id
+                    }" value="${sanitizeHtml(fieldValue)}"
+                    ${isReadOnly ? "readonly" : ""} ${
+                      isRequired ? "required" : ""
+                    }
+                    placeholder="${sanitizeHtml(field.placeholder || "")}">
+                `;
+                  } else if (fieldType === "BOOLEAN") {
+                    inputHtml = `
+                  <select id="field-${field.id}" name="${field.id}" ${
+                      isReadOnly ? "disabled" : ""
+                    }>
+                    <option value="true" ${
+                      fieldValue === true || fieldValue === "true"
+                        ? "selected"
+                        : ""
+                    }>نعم</option>
+                    <option value="false" ${
+                      fieldValue === false || fieldValue === "false"
+                        ? "selected"
+                        : ""
+                    }>لا</option>
+                  </select>
+                `;
+                  } else {
+                    inputHtml = `
+                  <input type="text" id="field-${field.id}" name="${
+                      field.id
+                    }" value="${sanitizeHtml(fieldValue)}"
+                    ${isReadOnly ? "readonly" : ""} ${
+                      isRequired ? "required" : ""
+                    }
+                    placeholder="${sanitizeHtml(
+                      field.placeholder || ""
+                    )}" spellcheck="false">
+                `;
+                  }
+
+                  return `
+                <div class="form-field">
+                  <label for="field-${field.id}">
+                    ${sanitizeHtml(field.label)}
+                    ${isRequired ? '<span class="required">*</span>' : ""}
+                  </label>
+                  ${inputHtml}
+                  <div class="field-error" id="error-${field.id}"></div>
+                </div>
+              `;
+                })
+                .join("");
+
+              return `
+              <div class="tab-content ${idx === 0 ? "active" : ""}" data-tab="${
+                tab.id
+              }">
+                <div class="form-grid-enhanced">
+                  ${fieldsHtml}
+                </div>
+              </div>
+            `;
+            })
+            .join("");
+
+          const overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          overlay.id = "form-modal";
+          overlay.innerHTML = `
+            <div class="modal" style="max-width:900px;">
+              <div class="modal-header">
+                <div class="modal-title">
+                  <svg><use href="#icon-${
+                    mode === "edit" ? "edit" : "plus"
+                  }"></use></svg>
+                  <span>${sanitizeHtml(formTitle)}</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">
+                  <svg><use href="#icon-x"></use></svg>
+                </button>
+              </div>
+              <div class="modal-body">
+                <form id="entity-form">
+                  ${tabsNavHtml}
+                  ${tabsContentHtml}
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal()">إلغاء</button>
+                <button class="modal-btn modal-btn-primary" id="form-submit-btn" onclick="submitForm('${mode}', '${sanitizeHtml(
+            recordId || ""
+          )}', '${res.formId || "FORM_HRM_EMP"}')">
+                  <svg><use href="#icon-save"></use></svg>
+                  ${mode === "edit" ? "حفظ التعديلات" : "حفظ"}
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(overlay);
+
+          // Setup tab switching
+          overlay.querySelectorAll(".modal-tab").forEach((tabBtn) => {
+            tabBtn.addEventListener("click", (e) => {
+              e.preventDefault();
+              overlay
+                .querySelectorAll(".modal-tab")
+                .forEach((t) => t.classList.remove("active"));
+              overlay
+                .querySelectorAll(".tab-content")
+                .forEach((c) => c.classList.remove("active"));
+              tabBtn.classList.add("active");
+              overlay
+                .querySelector(`.tab-content[data-tab="${tabBtn.dataset.tab}"]`)
+                ?.classList.add("active");
+            });
+          });
+        }
+
+        /**
+         * Submits the form data
+         */
+        window.submitForm = function (mode, recordId, formId) {
+          const form = document.getElementById("entity-form");
+          const submitBtn = document.getElementById("form-submit-btn");
+
+          if (!form) return;
+
+          // Collect form data
+          const payload = {};
+          let hasErrors = false;
+
+          form.querySelectorAll("input, select, textarea").forEach((input) => {
+            const fieldId = input.name;
+            if (!fieldId) return;
+
+            payload[fieldId] = input.value;
+
+            // Clear previous error
+            const errorEl = document.getElementById(`error-${fieldId}`);
+            if (errorEl) errorEl.textContent = "";
+            input.classList.remove("error");
+
+            // Validate required fields
+            if (input.required && !input.value.trim()) {
+              hasErrors = true;
+              input.classList.add("error");
+              if (errorEl) errorEl.textContent = "هذا الحقل مطلوب";
+            }
+          });
+
+          if (hasErrors) {
+            showToast("الرجاء تعبئة جميع الحقول المطلوبة", "warning");
+            return;
+          }
+
+          // Add record ID for edit mode
+          if (mode === "edit" && recordId) {
+            payload._id = recordId;
+          }
+
+          // Disable submit button
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = "<span>جاري الحفظ...</span>";
+          }
+
+          const token = sessionStorage.getItem("erp_token");
+          const saveFunction =
+            mode === "edit" ? "updateEngineRecord" : "saveEngineRecord";
+
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                if (res && res.success) {
+                  closeModal();
+                  showToast(res.message || "تم الحفظ بنجاح", "success");
+                  refreshGrid();
+                } else {
+                  if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<svg><use href="#icon-save"></use></svg>${
+                      mode === "edit" ? "حفظ التعديلات" : "حفظ"
+                    }`;
+                  }
+
+                  // Show field-specific error if available
+                  if (res?.field) {
+                    const errorEl = document.getElementById(
+                      `error-${res.field}`
+                    );
+                    const inputEl = document.querySelector(
+                      `[name="${res.field}"]`
+                    );
+                    if (errorEl) errorEl.textContent = res.message;
+                    if (inputEl) inputEl.classList.add("error");
+                  } else {
+                    showToast(res?.message || "فشل الحفظ", "error");
+                  }
+                }
+              })
+              .withFailureHandler((e) => {
+                if (submitBtn) {
+                  submitBtn.disabled = false;
+                  submitBtn.innerHTML = `<svg><use href="#icon-save"></use></svg>${
+                    mode === "edit" ? "حفظ التعديلات" : "حفظ"
+                  }`;
+                }
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+              })
+              [saveFunction](formId, payload, token);
+          } catch (e) {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.innerHTML = `<svg><use href="#icon-save"></use></svg>${
+                mode === "edit" ? "حفظ التعديلات" : "حفظ"
+              }`;
+            }
+            showToast("خطأ غير متوقع", "error");
+          }
+        };
+
+        // ================================================================================
+        // TOAST NOTIFICATION SYSTEM
+        // ================================================================================
+
+        /**
+         * Shows a toast notification
+         */
+        function showToast(message, type = "info") {
+          const iconMap = {
+            success: "icon-check",
+            error: "icon-x",
+            warning: "icon-alert-triangle",
+            info: "icon-eye",
+          };
+
+          const toast = document.createElement("div");
+          toast.className = `toast ${type}`;
+          toast.innerHTML = `
+            <svg><use href="#${iconMap[type] || iconMap.info}"></use></svg>
+            <span class="toast-message">${sanitizeHtml(message)}</span>
+            <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+          `;
+
+          toastContainer.appendChild(toast);
+
+          // Auto-remove after 5 seconds
+          setTimeout(() => {
+            toast.style.animation = "slideInRight 0.3s ease reverse";
+            setTimeout(() => toast.remove(), 300);
+          }, 5000);
+        }
+
+        // Legacy renderForm function for backward compatibility
+        function renderForm(res) {
+          var overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          var modal = document.createElement("div");
+          modal.className = "modal";
+          var title = document.createElement("h3");
+          title.textContent = res && res.title ? res.title : "";
+          var form = document.createElement("div");
+          form.className = "form-grid";
+          (res && res.fields ? res.fields : []).forEach(function (f) {
+            var wrap = document.createElement("div");
+            wrap.className = "form-field";
+            var label = document.createElement("label");
+            label.textContent = f.label || f.id;
+            var input;
+            var t = String(f.type || "").toUpperCase();
+            if (t === "DROPDOWN") {
+              input = document.createElement("select");
+              (f.options || []).forEach(function (opt) {
+                var o = document.createElement("option");
+                o.value = opt.value;
+                o.textContent = opt.label || opt.value;
+                input.appendChild(o);
+              });
+            } else {
+              input = document.createElement("input");
+              input.type = t === "NUMBER" ? "number" : "text";
+            }
+            try {
+              input.setAttribute("spellcheck", "false");
+            } catch (e) {}
+            input.id = f.id;
+            if (f.mandatory) input.required = true;
+            wrap.appendChild(label);
+            wrap.appendChild(input);
+            form.appendChild(wrap);
+          });
+          var actions = document.createElement("div");
+          actions.className = "modal-actions";
+          var saveBtn = document.createElement("button");
+          saveBtn.textContent = "حفظ";
+          saveBtn.className = "btn-save";
+          saveBtn.addEventListener("click", function () {
+            var payload = {};
+            (res.fields || []).forEach(function (f) {
+              var el = document.getElementById(f.id);
+              payload[f.id] = el ? el.value : "";
+            });
+            try {
+              const token = sessionStorage.getItem("erp_token");
+              google.script.run
+                .withSuccessHandler(function (res) {
+                  overlay.remove();
+                  loadModule("HRM");
+                })
+                .saveEngineRecord(res.formId || "FORM_HRM_EMP", payload, token);
+            } catch (e) {}
+          });
+          var closeBtn = document.createElement("button");
+          closeBtn.textContent = "إغلاق";
+          closeBtn.className = "btn-close-modal";
+          closeBtn.addEventListener("click", function () {
+            overlay.remove();
+          });
+          actions.appendChild(saveBtn);
+          actions.appendChild(closeBtn);
+          modal.appendChild(title);
+          modal.appendChild(form);
+          modal.appendChild(actions);
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+        }
+
+        document.getElementById("app-hrm").addEventListener("click", () => {
+          ensureFabExists("hrm", "#icon-hrm", [
+            { action: "add-employee", icon: "#icon-plus", title: "إضافة موظف" },
+            { action: "search-employee", icon: "#icon-search", title: "بحث" },
+          ]);
+          loadModule("HRM");
+        });
+        document.getElementById("app-prj").addEventListener("click", () => {
+          openOrFocusWindow(
+            "prj",
+            "وحدة المشاريع (PRJ)",
+            `<h3>إضافة مشروع جديد</h3>...`,
+            {
+              icon: "#icon-prj",
+              subModules: [
+                {
+                  action: "add-project",
+                  icon: "#icon-plus",
+                  title: "إضافة مشروع",
+                },
+                {
+                  action: "add-client",
+                  icon: "#icon-hrm",
+                  title: "إضافة عميل",
+                },
+              ],
+            }
+          );
+        });
+        document.getElementById("app-fin").addEventListener("click", () => {
+          openOrFocusWindow(
+            "fin",
+            "وحدة المالية (FIN)",
+            `<h3>المصروفات والإيرادات</h3>...`,
+            {
+              icon: "#icon-fin",
+              subModules: [
+                {
+                  action: "add-expense",
+                  icon: "#icon-plus",
+                  title: "إضافة مصروف",
+                },
+                {
+                  action: "add-income",
+                  icon: "#icon-plus",
+                  title: "إضافة إيراد",
+                },
+              ],
+            }
+          );
+        });
+        document.getElementById("app-sys").addEventListener("click", () => {
+          openOrFocusWindow(
+            "sys",
+            "سجل تدقيق النظام (SYS)",
+            `<pre class="audit-log">...</pre>`
+          );
+        });
+
+        document
+          .getElementById("app-grid")
+          .addEventListener("click", arrangeWindowsInGrid);
+        document
+          .getElementById("app-cascade")
+          .addEventListener("click", arrangeWindowsCascade);
+        document
+          .getElementById("app-minimize-all")
+          .addEventListener("click", minimizeAllWindows);
+        document
+          .getElementById("app-expand-all")
+          .addEventListener("click", expandAllWindows);
+
+        // --- REAL BACKEND LOGOUT ---
+        document
+          .getElementById("app-shutdown")
+          .addEventListener("click", () => {
+            try {
+              const token = sessionStorage.getItem("erp_token");
+              if (token) google.script.run.logout(token);
+            } catch (e) {}
+            sessionStorage.removeItem("erp_token");
+            sessionStorage.clear();
+            window.location.reload();
+          });
+
+        // --- 7. Floating Action Button (FAB) Manager ---
+        const fabStore = {};
+        function ensureFabExists(moduleId, mainIconHref, subModules) {
+          if (fabStore[moduleId]) return;
+
+          logToConsole(`Creating FAB for module: ${moduleId}`, "CLIENT-INFO");
+
+          const fab = fabTemplate.content
+            .cloneNode(true)
+            .querySelector(".module-fab");
+          fab.id = `fab-${moduleId}`;
+
+          fab.querySelector(
+            ".fab-main"
+          ).innerHTML = `<svg><use href="${mainIconHref}"></use></svg>`;
+
+          const raysContainer = fab.querySelector(".fab-rays");
+          subModules.forEach((mod, index) => {
+            const ray = fabRayTemplate.content
+              .cloneNode(true)
+              .querySelector(".fab-ray");
+            const subApp = ray.querySelector(".fab-sub-app");
+            subApp.dataset.action = mod.action;
+            subApp.title = mod.title;
+            subApp.innerHTML = `<svg><use href="${mod.icon}"></use></svg>`;
+            const angle = -45 + index * 45;
+            ray.style.transform = `translate(30px, 30px) rotate(${angle}deg)`;
+            raysContainer.appendChild(ray);
+          });
+
+          makeDraggable(fab.querySelector(".fab-main"), fab, true);
+
+          raysContainer.addEventListener("click", (e) => {
+            const actionBtn = e.target.closest(".fab-sub-app");
+            if (actionBtn) {
+              const action = actionBtn.dataset.action;
+              logToConsole(`FAB Action: ${action}`, "CLIENT-EVENT");
+
+              // Handle different FAB actions
+              switch (action) {
+                case "add-employee":
+                  openAddForm();
+                  break;
+                case "search-employee":
+                  // Focus the search input in the current grid
+                  const searchInput = document.querySelector("#grid-search");
+                  if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                  }
+                  break;
+                case "add-project":
+                  logToConsole(
+                    "Add project - not yet implemented",
+                    "CLIENT-INFO"
+                  );
+                  break;
+                default:
+                  logToConsole(`Unknown action: ${action}`, "CLIENT-WARN");
+              }
+
+              fab.classList.remove("active");
+              e.stopPropagation();
+            }
+          });
+
+          fabContainer.appendChild(fab);
+          fabStore[moduleId] = fab;
+
+          // Show the FAB immediately when created
+          fab.style.display = "block";
+        }
+
+        /**
+         * Toggles FAB visibility (called from eye icon in window header)
+         * This shows/hides the entire FAB button
+         */
+        function toggleFabForModule(moduleId) {
+          const fab = fabStore[moduleId];
+          if (fab) {
+            const isCurrentlyVisible = fab.style.display !== "none";
+
+            if (isCurrentlyVisible) {
+              // Hide FAB and close rays
+              fab.style.display = "none";
+              fab.classList.remove("active");
+              logToConsole(`FAB hidden for ${moduleId}`, "CLIENT-EVENT");
+            } else {
+              // Show FAB (rays remain closed until user clicks FAB)
+              fab.style.display = "block";
+              logToConsole(`FAB shown for ${moduleId}`, "CLIENT-EVENT");
+            }
+          }
+        }
+
+        // --- 8. Task Switcher Manager ---
+        function addTaskThumb(windowId, moduleId, title) {
+          const thumb = taskThumbTemplate.content
+            .cloneNode(true)
+            .querySelector(".task-thumb");
+          thumb.dataset.windowId = windowId;
+
+          const iconHref = moduleIcons[moduleId] || "#icon-sys";
+          thumb.querySelector("svg use").setAttribute("href", iconHref);
+
+          thumb.querySelector(".task-thumb-title").textContent =
+            title.substring(0, 10) + "...";
+
+          thumb.addEventListener("click", () => {
+            const windowEl = document.getElementById(windowId);
+            if (windowEl) {
+              bringWindowToFront(windowEl);
+            }
+          });
+
+          taskSwitcher.appendChild(thumb);
+        }
+
+        function removeTaskThumb(windowId) {
+          document
+            .querySelector(`.task-thumb[data-window-id="${windowId}"]`)
+            ?.remove();
+        }
+
+        // --- 9. Global Log Function ---
+        function logToConsole(message, type = "CLIENT-INFO") {
+          console.log(`[${type}] ${message}`);
+        }
+
+        /**
+         * Opens a form modal (legacy function - now uses new modal system)
+         */
+        function openForm(formId) {
+          logToConsole(`Opening Form: ${formId}`, "CLIENT-INFO");
+
+          // Use the new form modal system
+          if (formId === "FORM_HRM_EMP") {
+            openAddForm();
+            return;
+          }
+
+          // Fallback for other forms
+          try {
+            google.script.run
+              .withSuccessHandler((res) => {
+                if (res && res.success) {
+                  renderFormModal(res, "add");
+                } else {
+                  showToast(res?.message || "فشل تحميل النموذج", "error");
+                }
+              })
+              .withFailureHandler((e) => {
+                showToast("خطأ في الاتصال: " + (e?.message || e), "error");
+                logToConsole(
+                  "Form Load Failed: " + (e?.message || e),
+                  "CLIENT-ERROR"
+                );
+              })
+              .getFormDefinition(formId, "add", null);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        try {
+          google.script.run.seedSystemData();
+          logToConsole("Seed job triggered", "CLIENT-INFO");
+        } catch (e) {}
+      });
+    </script>
+  </body>
+</html>
