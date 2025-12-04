@@ -1,16 +1,20 @@
 const CONFIG = {
-  HARDCODED_ID: "1anq5RkM_vEIyYtMpakE69kXP2XWQkPlxdfYgvmVF3ls",
   get SHEET_ID() {
-    return (
-      PropertiesService.getScriptProperties().getProperty("SHEET_ID") ||
-      this.HARDCODED_ID
-    );
+    var id = PropertiesService.getScriptProperties().getProperty("SHEET_ID");
+    if (!id) {
+      throw new Error(
+        "SHEET_ID is not configured in Script Properties. Please set it via setupScriptProperties with the correct sheet ID."
+      );
+    }
+    return id;
   },
 };
 
-function setupScriptProperties() {
-  PropertiesService.getScriptProperties().setProperty(
-    "SHEET_ID",
-    CONFIG.HARDCODED_ID
-  );
+function setupScriptProperties(sheetId) {
+  if (!sheetId) {
+    throw new Error(
+      "setupScriptProperties requires an explicit sheetId. No hardcoded defaults are allowed."
+    );
+  }
+  PropertiesService.getScriptProperties().setProperty("SHEET_ID", sheetId);
 }

@@ -13,10 +13,41 @@ function doGet(e) {
   return html;
 }
 
+function getSpreadsheet_(actor, action, entity) {
+  var sheetId;
+  try {
+    sheetId = CONFIG.SHEET_ID;
+  } catch (configErr) {
+    try {
+      Logger.log("CONFIG.SHEET_ID missing: " + configErr);
+    } catch (logErr) {}
+    throw configErr;
+  }
+  try {
+    return SpreadsheetApp.openById(sheetId);
+  } catch (sheetErr) {
+    try {
+      logError_(
+        actor || "system",
+        action || "OPEN_SPREADSHEET",
+        entity || "CONFIG",
+        sheetId || "",
+        "فشل فتح قاعدة البيانات",
+        sheetErr
+      );
+    } catch (logErr2) {
+      try {
+        Logger.log("logError_ failed while opening sheet: " + logErr2);
+      } catch (_) {}
+    }
+    throw sheetErr;
+  }
+}
+
 function validateSession_(token) {
   try {
     if (!token) return { valid: false, error: "Missing token" };
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var ss = getSpreadsheet_("system", "AUTH_CHECK", "SYS_Sessions");
     var sheet = ss.getSheetByName("SYS_Sessions");
     if (!sheet) return { valid: false, error: "Session store missing" };
     var h = sheet
@@ -48,6 +79,9 @@ function validateSession_(token) {
     }
     return { valid: false, error: "Invalid or expired token" };
   } catch (e) {
+    try {
+      logError_("system", "AUTH_CHECK", "SYS_Sessions", token, "Auth check failed", e);
+    } catch (_) {}
     return { valid: false, error: "Auth check failed" };
   }
 }
@@ -72,9 +106,89 @@ function hashSha256Hex_(text) {
   return out.join("");
 }
 
+function getUserRoleId_(ss, userId) {
+  try {
+    var userSheet = ss.getSheetByName("SYS_Users");
+    if (!userSheet) return "";
+    var data = userSheet.getDataRange().getValues();
+    if (data.length < 2) return "";
+    var h = data[0].map(String);
+    var idIdx = h.indexOf("USR_ID");
+    var roleIdx = h.indexOf("ROL_ID");
+    if (idIdx < 0 || roleIdx < 0) return "";
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idIdx]).trim() === String(userId).trim()) {
+        return String(data[i][roleIdx]).trim();
+      }
+    }
+    return "";
+  } catch (e) {
+    try {
+      logError_(userId || "unknown", "LOAD_ROLE", "SYS_Users", userId, "تعذر جلب الدور", e);
+    } catch (_) {}
+    return "";
+  }
+}
+
+function getRolePermissionMap_(ss, roleId) {
+  var map = { views: {}, forms: {}, buttons: {}, dropdowns: {} };
+  if (!roleId) return map;
+  try {
+    var roleSheet = ss.getSheetByName("SYS_Role_Permissions");
+    if (!roleSheet) return map;
+    var data = roleSheet.getDataRange().getValues();
+    if (data.length < 2) return map;
+    var h = data[0].map(String);
+    var roleIdx = h.indexOf("ROL_ID");
+    var permIdx = h.indexOf("PRM_ID");
+    var scopeIdx = h.indexOf("SRP_Scope");
+    var allowIdx = h.indexOf("SRP_Is_Allowed");
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][roleIdx]).trim() !== String(roleId).trim()) continue;
+      var allowed = allowIdx >= 0 ? String(data[i][allowIdx]).toUpperCase() !== "FALSE" : true;
+      if (!allowed) continue;
+      var scope = scopeIdx >= 0 ? String(data[i][scopeIdx]).toUpperCase() : "";
+      var permId = permIdx >= 0 ? String(data[i][permIdx]).trim() : "";
+      if (!permId) continue;
+      if (scope === "VIEW") map.views[permId] = true;
+      else if (scope === "FORM") map.forms[permId] = true;
+      else if (scope === "BUTTON") map.buttons[permId] = true;
+      else if (scope === "DROPDOWN") map.dropdowns[permId] = true;
+    }
+    return map;
+  } catch (e) {
+    try {
+      logError_(roleId || "unknown", "LOAD_PERMISSIONS", "SYS_Role_Permissions", roleId, "تعذر تحميل صلاحيات الدور", e);
+    } catch (_) {}
+    return map;
+  }
+}
+
+function isPermitted_(permMap, scope, id) {
+  if (!id) return false;
+  var bucket = permMap[scope] || {};
+  return !!bucket[id];
+}
+
+function buildAuthContext_(token, action) {
+  var base = validateSession_(token);
+  if (!base.valid) return { valid: false, error: base.error };
+  var ss = getSpreadsheet_(base.userId || "system", action || "CTX", "SYS_Sessions");
+  var roleId = getUserRoleId_(ss, base.userId);
+  var permissions = getRolePermissionMap_(ss, roleId);
+  return {
+    valid: true,
+    userId: base.userId,
+    email: base.email,
+    ss: ss,
+    roleId: roleId,
+    permissions: permissions,
+  };
+}
+
 function login(username, password) {
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var ss = getSpreadsheet_(username || "system", "LOGIN", "SYS_Users");
     var sheet = ss.getSheetByName("SYS_Users");
     if (!sheet) return { success: false };
     var headers = sheet
@@ -85,6 +199,7 @@ function login(username, password) {
       });
     var nameIdx = headers.indexOf("USR_Name");
     var idIdx = headers.indexOf("USR_ID");
+    var roleIdx = headers.indexOf("ROL_ID");
     var emailIdx = headers.indexOf("EMP_Email");
     var passIdx = headers.indexOf("Password_Hash");
     var saltIdx = headers.indexOf("Password_Salt");
@@ -110,7 +225,12 @@ function login(username, password) {
         match = phash === inputHashUnsalted;
       }
       if (uname.toLowerCase() === String(username).toLowerCase() && match) {
-        found = { USR_ID: r[idIdx], USR_Name: uname, EMP_Email: r[emailIdx] };
+        found = {
+          USR_ID: r[idIdx],
+          USR_Name: uname,
+          EMP_Email: r[emailIdx],
+          ROL_ID: roleIdx >= 0 ? r[roleIdx] : "",
+        };
         break;
       }
     }
@@ -194,10 +314,11 @@ function logout(token) {
 
 function appendDebugRow(sheetName, dataObj) {
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var ss = getSpreadsheet_(dataObj.Actor || "system", "DBUG", sheetName);
     var primary = ss.getSheetByName("DBUG") || ss.getSheetByName(sheetName);
     var sheet = primary || ss.getSheetByName("DBUG_AppLog");
-    if (!sheet) return;
+    if (!sheet)
+      throw new Error("DBUG sheets are missing: DBUG, " + sheetName + " or DBUG_AppLog");
     var headers = sheet
       .getRange(1, 1, 1, sheet.getLastColumn())
       .getValues()[0]
@@ -216,31 +337,53 @@ function appendDebugRow(sheetName, dataObj) {
     }
     dataObj["Time_Stamp"] = new Date().toISOString();
     insertRowByHeaders_(sheet, headers, dataObj);
-  } catch (e) {}
+    return { success: true, sheet: sheetName };
+  } catch (e) {
+    try {
+      Logger.log("appendDebugRow failure for " + sheetName + ": " + e);
+    } catch (_) {}
+    return { success: false, error: e };
+  }
 }
 
 function logInfo_(actor, action, entity, id, details) {
-  appendDebugRow("DBUG_AppLog", {
+  var res = appendDebugRow("DBUG_AppLog", {
     Actor: actor || "system",
     Action: action,
     Entity: entity,
     Entity_ID: id || "",
     Details: details || "",
   });
+  if (!res || res.success === false) {
+    try {
+      Logger.log(
+        "logInfo_ fallback => " +
+          JSON.stringify({ actor: actor, action: action, entity: entity, id: id, details: details })
+      );
+    } catch (_) {}
+  }
 }
 
 function logWarn_(actor, action, entity, id, details) {
-  appendDebugRow("DBUG_WarnLog", {
+  var res = appendDebugRow("DBUG_WarnLog", {
     Actor: actor || "system",
     Action: action,
     Entity: entity,
     Entity_ID: id || "",
     Details: details || "",
   });
+  if (!res || res.success === false) {
+    try {
+      Logger.log(
+        "logWarn_ fallback => " +
+          JSON.stringify({ actor: actor, action: action, entity: entity, id: id, details: details })
+      );
+    } catch (_) {}
+  }
 }
 
 function logError_(actor, action, entity, id, message, errorObject) {
-  appendDebugRow("DBUG_ErrorLog", {
+  var res = appendDebugRow("DBUG_ErrorLog", {
     Actor: actor || "system",
     Action: action,
     Entity: entity,
@@ -248,6 +391,21 @@ function logError_(actor, action, entity, id, message, errorObject) {
     Message:
       (message || "") + (errorObject ? " :: " + String(errorObject) : ""),
   });
+  if (!res || res.success === false) {
+    try {
+      Logger.log(
+        "logError_ fallback => " +
+          JSON.stringify({
+            actor: actor,
+            action: action,
+            entity: entity,
+            id: id,
+            message: message,
+            error: errorObject,
+          })
+      );
+    } catch (_) {}
+  }
 }
 
 function getModuleData(viewId, token, options) {
@@ -266,7 +424,7 @@ function getModuleData(viewId, token, options) {
     };
   }
 
-  var auth = validateSession_(token);
+  var auth = buildAuthContext_(token, "VIEW_DATA");
   if (!auth.valid) {
     return {
       success: false,
@@ -275,24 +433,17 @@ function getModuleData(viewId, token, options) {
     };
   }
 
+  if (!isPermitted_(auth.permissions, "views", viewId)) {
+    logWarn_(auth.userId, "VIEW_DENIED", "ENG_Views", viewId, "المستخدم غير مصرح له بالعرض");
+    return {
+      success: false,
+      message: "ليست لديك صلاحية لفتح هذا العرض",
+      code: "FORBIDDEN_VIEW",
+    };
+  }
+
   try {
-    var ss;
-    try {
-      ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
-    } catch (sheetErr) {
-      logError_(
-        auth.userId || "unknown",
-        "VIEW_DATA",
-        "CONFIG",
-        viewId,
-        "Cannot open spreadsheet",
-        sheetErr
-      );
-      return {
-        success: false,
-        message: "فشل الاتصال بقاعدة البيانات: " + String(sheetErr),
-      };
-    }
+    var ss = auth.ss || getSpreadsheet_(auth.userId, "VIEW_DATA", viewId);
 
     var vSheet = ss.getSheetByName("ENG_Views");
     if (!vSheet) {
@@ -480,7 +631,7 @@ function getModuleData(viewId, token, options) {
     var endIdx = Math.min(startIdx + pageSize, totalRecords);
     var paginatedRows = allRows.slice(startIdx, endIdx);
 
-    var buttons = getViewButtons_(ss, viewId, auth.userId);
+    var buttons = getViewButtons_(ss, viewId, auth.userId, auth.permissions);
 
     var outData = paginatedRows.map(function (row) {
       return {
@@ -523,18 +674,16 @@ function getModuleData(viewId, token, options) {
     } catch (stringifyErr) {
       errorMsg = "خطأ غير معروف في الخادم";
     }
-    try {
-      logError_(
-        typeof auth !== "undefined" && auth && auth.userId
-          ? auth.userId
-          : "unknown",
-        "VIEW_DATA",
-        "ENG_Views",
-        viewId || "unknown",
-        "Error fetching data: " + errorMsg,
-        e
-      );
-    } catch (logErr) {}
+    logError_(
+      typeof auth !== "undefined" && auth && auth.userId
+        ? auth.userId
+        : "unknown",
+      "VIEW_DATA",
+      "ENG_Views",
+      viewId || "unknown",
+      "Error fetching data: " + errorMsg,
+      e
+    );
     Logger.log("getModuleData Error: " + errorMsg);
     return {
       success: false,
@@ -579,7 +728,93 @@ function debugGetModuleData(viewId, token, options) {
   }
 }
 
-function getViewButtons_(ss, viewId, userId) {
+function getBootstrapMetadata(token) {
+  var auth = buildAuthContext_(token, "BOOTSTRAP");
+  if (!auth.valid)
+    return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+  try {
+    var ss = auth.ss || getSpreadsheet_(auth.userId, "BOOTSTRAP", "ENG_Views");
+    var perm = auth.permissions || { views: {}, forms: {}, buttons: {}, dropdowns: {} };
+    var views = [];
+    var vSheet = ss.getSheetByName("ENG_Views");
+    if (vSheet) {
+      var vData = vSheet.getDataRange().getValues();
+      var vh = vData[0].map(String);
+      var idIdx = vh.indexOf("VIEW_ID");
+      var titleIdx = vh.indexOf("View_Title");
+      var srcIdx = vh.indexOf("Source_Sheet");
+      for (var i = 1; i < vData.length; i++) {
+        var vid = vData[i][idIdx];
+        if (!isPermitted_(perm, "views", vid)) continue;
+        views.push({
+          id: vid,
+          title: vData[i][titleIdx],
+          sheet: vData[i][srcIdx],
+        });
+      }
+    }
+
+    var forms = [];
+    var fSheet = ss.getSheetByName("ENG_Forms");
+    if (fSheet) {
+      var fData = fSheet.getDataRange().getValues();
+      var fh = fData[0].map(String);
+      var idIdxF = fh.indexOf("FORM_ID");
+      var tabIdx = fh.indexOf("Tab_Name");
+      var targetIdx = fh.indexOf("Target_Sheet");
+      for (var j = 1; j < fData.length; j++) {
+        var fid = fData[j][idIdxF];
+        if (!isPermitted_(perm, "forms", fid)) continue;
+        forms.push({ id: fid, tab: fData[j][tabIdx], target: fData[j][targetIdx] });
+      }
+    }
+
+    var buttons = [];
+    var bSheet = ss.getSheetByName("ENG_Buttons");
+    if (bSheet) {
+      var bData = bSheet.getDataRange().getValues();
+      var bh = bData[0].map(String);
+      var idIdxB = bh.indexOf("BTN_ID");
+      var viewIdx = bh.indexOf("VIEW_ID");
+      var lblIdx = bh.indexOf("BTN_Label");
+      for (var k = 1; k < bData.length; k++) {
+        var bid = bData[k][idIdxB];
+        if (!isPermitted_(perm, "buttons", bid)) continue;
+        buttons.push({ id: bid, view: bData[k][viewIdx], label: bData[k][lblIdx] });
+      }
+    }
+
+    var dropdowns = [];
+    var dSheet = ss.getSheetByName("ENG_Dropdowns");
+    if (dSheet) {
+      var dData = dSheet.getDataRange().getValues();
+      var dh = dData[0].map(String);
+      var idIdxD = dh.indexOf("DD_ID");
+      var enIdx = dh.indexOf("DD_EN");
+      var arIdx = dh.indexOf("DD_AR");
+      for (var m = 1; m < dData.length; m++) {
+        var ddid = dData[m][idIdxD];
+        if (!isPermitted_(perm, "dropdowns", ddid)) continue;
+        dropdowns.push({ id: ddid, en: dData[m][enIdx], ar: dData[m][arIdx] });
+      }
+    }
+
+    return {
+      success: true,
+      user: { id: auth.userId, roleId: auth.roleId, email: auth.email },
+      views: views,
+      forms: forms,
+      buttons: buttons,
+      dropdowns: dropdowns,
+      permissions: perm,
+    };
+  } catch (e) {
+    logError_(auth.userId, "BOOTSTRAP", "ENG_Metadata", "", "فشل تحميل البيانات", e);
+    return { success: false, message: String(e) };
+  }
+}
+
+function getViewButtons_(ss, viewId, userId, permMap) {
   try {
     var btnSheet = ss.getSheetByName("ENG_Buttons");
     if (!btnSheet) return [];
@@ -605,6 +840,11 @@ function getViewButtons_(ss, viewId, userId) {
         label: row[labelIdx],
         type: String(row[typeIdx]).toUpperCase(),
         description: row[descIdx],
+      });
+    }
+    if (permMap && Object.keys(permMap).length > 0) {
+      buttons = buttons.filter(function (b) {
+        return isPermitted_(permMap, "buttons", b.id);
       });
     }
     if (buttons.length === 0) {
@@ -711,9 +951,17 @@ function getRecordById(tableName, recordId, token) {
   }
 }
 
-function getFormDefinition(formId, mode, existingData) {
+function getFormDefinition(formId, mode, existingData, token) {
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var auth = buildAuthContext_(token, "FORM_DEFINITION");
+    if (!auth.valid) {
+      return { success: false, message: auth.error || "فشل المصادقة", code: "AUTH_REQUIRED" };
+    }
+    if (!isPermitted_(auth.permissions, "forms", formId)) {
+      logWarn_(auth.userId, "FORM_DENIED", "ENG_Forms", formId, "المستخدم غير مصرح له بالنموذج");
+      return { success: false, message: "ليست لديك صلاحية لفتح النموذج", code: "FORBIDDEN_FORM" };
+    }
+    var ss = auth.ss || getSpreadsheet_(auth.userId, "FORM_DEFINITION", formId);
     var fSheet = ss.getSheetByName("ENG_Forms");
     if (!fSheet) throw "ENG_Forms sheet not found";
     var data = fSheet.getDataRange().getValues();
@@ -881,11 +1129,15 @@ function getDropdownOptionsFromTable_(ss, tableName) {
 }
 
 function saveEngineRecord(formId, payload, token) {
-  var auth = validateSession_(token);
+  var auth = buildAuthContext_(token, "SAVE_RECORD");
   if (!auth.valid)
     return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+  if (!isPermitted_(auth.permissions, "forms", formId)) {
+    logWarn_(auth.userId, "FORM_DENIED", "ENG_Forms", formId, "محاولة حفظ بدون صلاحية");
+    return { success: false, code: "FORBIDDEN_FORM", message: "لا تملك صلاحية لحفظ هذا النموذج" };
+  }
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var ss = auth.ss || getSpreadsheet_(auth.userId, "SAVE_RECORD", formId);
     var fSheet = ss.getSheetByName("ENG_Forms");
     var fData = fSheet.getDataRange().getValues();
     var fh = fData[0].map(String);
@@ -980,11 +1232,15 @@ function saveEngineRecord(formId, payload, token) {
 }
 
 function updateEngineRecord(formId, payload, token) {
-  var auth = validateSession_(token);
+  var auth = buildAuthContext_(token, "UPDATE_RECORD");
   if (!auth.valid)
     return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+  if (!isPermitted_(auth.permissions, "forms", formId)) {
+    logWarn_(auth.userId, "FORM_DENIED", "ENG_Forms", formId, "محاولة تعديل بدون صلاحية");
+    return { success: false, code: "FORBIDDEN_FORM", message: "لا تملك صلاحية لتعديل هذا النموذج" };
+  }
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var ss = auth.ss || getSpreadsheet_(auth.userId, "UPDATE_RECORD", formId);
     var fSheet = ss.getSheetByName("ENG_Forms");
     var fData = fSheet.getDataRange().getValues();
     var fh = fData[0].map(String);
@@ -1114,11 +1370,37 @@ function updateEngineRecord(formId, payload, token) {
 }
 
 function deleteEngineRecord(tableName, id, token) {
-  var auth = validateSession_(token);
+  var auth = buildAuthContext_(token, "DELETE_RECORD");
   if (!auth.valid)
     return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+  var allowed = false;
+  if (auth.permissions) {
+    allowed = isPermitted_(auth.permissions, "forms", tableName);
+    if (!allowed) {
+      var setSheet = auth.ss.getSheetByName("ENG_Settings");
+      if (setSheet) {
+        var setData = setSheet.getDataRange().getValues();
+        var sh = setData[0].map(String);
+        var keyIdx = sh.indexOf("Setting_Key");
+        var sheetIdx = sh.indexOf("Sheet_Name");
+        for (var i = 1; i < setData.length; i++) {
+          if (String(setData[i][sheetIdx]).trim() === tableName) {
+            var key = String(setData[i][keyIdx]).replace("FORM_MASTER:", "");
+            if (isPermitted_(auth.permissions, "forms", key)) {
+              allowed = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  if (!allowed) {
+    logWarn_(auth.userId, "DELETE_DENIED", tableName, id, "محاولة حذف بدون صلاحية");
+    return { success: false, code: "FORBIDDEN_DELETE", message: "لا تملك صلاحية لحذف هذا السجل" };
+  }
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var ss = auth.ss || getSpreadsheet_(auth.userId, "DELETE_RECORD", tableName);
     var sheet = ss.getSheetByName(tableName);
     if (!sheet) return { success: false, message: "Target Sheet Not Found" };
     var h = sheet
@@ -1206,7 +1488,7 @@ function getEmployeeForm(mode, empId, token) {
     }
     existingData = empResult.record;
   }
-  return getFormDefinition("FORM_HRM_AddEmployee", mode, existingData);
+  return getFormDefinition("FORM_HRM_AddEmployee", mode, existingData, token);
 }
 
 function getDepartments(token) {
