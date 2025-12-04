@@ -357,7 +357,7 @@ Playwright is configured to run tests on:
 - Firefox
 - WebKit (Safari)
 
-Test reports are generated in `playwright-report/` and artifacts in `test-results/`.
+Test reports are generated in `playwright-report/`, test results in `test-results/`, and custom artifacts (screenshots, logs) in `artifacts/`.
 
 ---
 
