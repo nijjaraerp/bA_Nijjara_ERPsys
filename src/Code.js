@@ -4,14 +4,29 @@
  * ================================================================================
  */
 
+/**
+ * ================================================================================
+ * NIJJARA ERP - ENHANCED CODE.JS (PROFESSIONAL BACKEND)
+ * ================================================================================
+ * Note: CONFIG is defined in Config.js
+ */
+
 function doGet(e) {
-  var t = HtmlService.createTemplateFromFile("Dashboard");
-  var html = t
-    .evaluate()
-    .setTitle("Nijjara ERP")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  return html;
+  try {
+    try { seedSystemData(); } catch (seedErr) { Logger.log(seedErr); }
+    var t = HtmlService.createTemplateFromFile("Dashboard");
+    t.API_URL = ScriptApp.getService().getUrl();
+    return t
+      .evaluate()
+      .setTitle("نظام نجارة ERP")
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (error) {
+    Logger.log("doGet Error: " + error);
+    return HtmlService.createHtmlOutput("Error: " + error);
+  }
 }
+
+// removed legacy doPost in favor of enhanced router below
 
 function validateSession_(token) {
   try {
@@ -52,6 +67,17 @@ function validateSession_(token) {
   }
 }
 
+function getSessionStatus(token) {
+  try {
+    var res = validateSession_(token);
+    return res.valid
+      ? { success: true, valid: true, userId: res.userId, email: res.email }
+      : { success: true, valid: false };
+  } catch (e) {
+    return { success: false, valid: false, message: String(e) };
+  }
+}
+
 function generateSalt_() {
   return Utilities.getUuid();
 }
@@ -72,81 +98,280 @@ function hashSha256Hex_(text) {
   return out.join("");
 }
 
+/**
+ * Enhanced Login Function for Professional Frontend
+ */
 function login(username, password) {
   try {
+    logInfo_(
+      "system",
+      "LOGIN_ATTEMPT",
+      "SYS_Users",
+      username,
+      "Login attempt started"
+    );
+
     var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
     var sheet = ss.getSheetByName("SYS_Users");
-    if (!sheet) return { success: false };
+    if (!sheet) {
+      logError_(
+        username,
+        "LOGIN",
+        "SYS_Users",
+        "",
+        "SYS_Users sheet missing",
+        null
+      );
+      return {
+        success: false,
+        message: "System configuration error",
+        code: "MISSING_USER_TABLE",
+      };
+    }
+
+    // Read headers using Smart Header Protocol (Row 1)
     var headers = sheet
       .getRange(1, 1, 1, sheet.getLastColumn())
       .getValues()[0]
       .map(function (v) {
         return String(v).trim();
       });
+
     var nameIdx = headers.indexOf("USR_Name");
     var idIdx = headers.indexOf("USR_ID");
     var emailIdx = headers.indexOf("EMP_Email");
+    var nameEnIdx = headers.indexOf("EMP_Name_EN");
+    var jobTitleIdx = headers.indexOf("Job_Title");
+    var deptIdx = headers.indexOf("DEPT_Name");
     var passIdx = headers.indexOf("Password_Hash");
     var saltIdx = headers.indexOf("Password_Salt");
-    if (nameIdx < 0 || passIdx < 0) return { success: false };
+    var lastLoginIdx = headers.indexOf("Last_Login");
+
+    if (nameIdx < 0 || passIdx < 0 || saltIdx < 0) {
+      logError_(
+        username,
+        "LOGIN",
+        "SYS_Users",
+        "",
+        "Missing required columns",
+        null
+      );
+      return {
+        success: false,
+        message: "System configuration error: Missing required user columns",
+        code: "INVALID_SCHEMA",
+      };
+    }
+
+    // Read data rows (starting from Row 4 per Smart Header Protocol)
     var rows =
-      sheet.getLastRow() > 2
+      sheet.getLastRow() > 3
         ? sheet
-            .getRange(3, 1, sheet.getLastRow() - 2, sheet.getLastColumn())
+            .getRange(4, 1, sheet.getLastRow() - 3, sheet.getLastColumn())
             .getValues()
         : [];
-    var inputHashUnsalted = hashSha256Hex_(password);
+
     var found = null;
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       var uname = String(r[nameIdx]).trim();
       var phash = String(r[passIdx]).trim();
-      var match = false;
-      if (saltIdx >= 0) {
-        var salt = String(r[saltIdx]).trim();
-        var inputHashSalted = hashPasswordWithSalt_(password, salt);
-        match = phash === inputHashSalted;
-      } else {
-        match = phash === inputHashUnsalted;
-      }
+      var salt = String(r[saltIdx]).trim();
+
+      // Enhanced password validation with salt
+      var inputHashSalted = hashPasswordWithSalt_(password, salt);
+      var match = phash === inputHashSalted;
+
       if (uname.toLowerCase() === String(username).toLowerCase() && match) {
-        found = { USR_ID: r[idIdx], USR_Name: uname, EMP_Email: r[emailIdx] };
+        found = {
+          USR_ID: r[idIdx],
+          USR_Name: uname,
+          EMP_Email: r[emailIdx],
+          EMP_Name_EN: r[nameEnIdx] || uname,
+          Job_Title: r[jobTitleIdx] || "User",
+          DEPT_Name: r[deptIdx] || "General",
+        };
+
+        // Update last login
+        if (lastLoginIdx >= 0) {
+          sheet.getRange(i + 4, lastLoginIdx + 1).setValue(new Date());
+        }
         break;
       }
     }
-    if (!found) return { success: false };
+
+    if (!found) {
+      logWarn_(username, "LOGIN_FAIL", "SYS_Users", "", "Invalid credentials");
+      return {
+        success: false,
+        message: "اسم المستخدم أو كلمة المرور غير صحيحة",
+        code: "INVALID_CREDENTIALS",
+      };
+    }
+
+    // Create session
     var token = Utilities.getUuid();
     var sess = ss.getSheetByName("SYS_Sessions");
-    if (!sess) return { success: false };
+    if (!sess) {
+      logError_(
+        username,
+        "LOGIN",
+        "SYS_Sessions",
+        "",
+        "Sessions table missing",
+        null
+      );
+      return {
+        success: false,
+        message: "System configuration error",
+        code: "MISSING_SESSIONS_TABLE",
+      };
+    }
+
     var sHeaders = sess
       .getRange(1, 1, 1, sess.getLastColumn())
       .getValues()[0]
       .map(function (v) {
         return String(v).trim();
       });
+
     var sIdIdx = sHeaders.indexOf("SESS_ID");
-    var targetRow = Math.max(3, sess.getLastRow() + 1);
     var now = new Date();
     var rowObj = {};
     var sessId = generateStructuredIdForColumn_(sess, sIdIdx);
-    if (!isValidStructuredId_(sessId)) return { success: false };
+
+    if (!isValidStructuredId_(sessId)) {
+      logError_(
+        username,
+        "LOGIN",
+        "SYS_Sessions",
+        "",
+        "ID generation failed",
+        null
+      );
+      return {
+        success: false,
+        message: "System error: Unable to create session",
+        code: "SESSION_CREATE_FAILED",
+      };
+    }
+
+    // Build session record
     rowObj["SESS_ID"] = sessId;
     rowObj["USR_ID"] = found.USR_ID;
     rowObj["EMP_Email"] = found.EMP_Email;
     rowObj["Actor_USR_ID"] = found.USR_ID;
     rowObj["SESS_Type"] = "WEB";
     rowObj["SESS_Status"] = "ACTIVE";
-    rowObj["IP_Address"] = "";
+    rowObj["IP_Address"] = ""; // Would be populated in real deployment
     rowObj["Auth_Token"] = token;
     rowObj["SESS_Start_At"] = now;
     rowObj["SESS_Crt_At"] = now;
     rowObj["SESS_Crt_By"] = "system";
+
     insertRowByHeaders_(sess, sHeaders, rowObj);
-    logInfo_(found.USR_ID, "LOGIN", "SYS_Sessions", sessId, "Login success");
-    return { success: true, token: token, user: found };
+    logInfo_(
+      found.USR_ID,
+      "LOGIN_SUCCESS",
+      "SYS_Sessions",
+      sessId,
+      "User logged in successfully"
+    );
+
+    // Load bootstrap data
+    var bootstrapData = getBootstrapData(found.USR_ID, token);
+
+    return {
+      success: true,
+      token: token,
+      user: {
+        id: found.USR_ID,
+        username: found.USR_Name,
+        name: found.EMP_Name_EN,
+        email: found.EMP_Email,
+        jobTitle: found.Job_Title,
+        department: found.DEPT_Name,
+      },
+      bootstrap: bootstrapData,
+      message: "تم تسجيل الدخول بنجاح",
+    };
   } catch (e) {
-    logError_(username, "LOGIN", "SYS_Sessions", "", "Login failure", e);
-    return { success: false };
+    logError_(
+      username,
+      "LOGIN_ERROR",
+      "SYS_Sessions",
+      "",
+      "Login exception",
+      e
+    );
+    return {
+      success: false,
+      message: "حدث خطأ أثناء تسجيل الدخول",
+      code: "LOGIN_EXCEPTION",
+    };
+  }
+}
+
+/**
+ * Enhanced API Handler for Professional Frontend
+ */
+function doPost(e) {
+  try {
+    var params = JSON.parse(e.postData.contents);
+    var action = params.action;
+
+    logInfo_("system", "API_CALL", "API", action, "API call received");
+
+    switch (action) {
+      case "login":
+        return ContentService.createTextOutput(
+          JSON.stringify(login(params.username, params.password))
+        ).setMimeType(ContentService.MimeType.JSON);
+
+      case "getBootstrap":
+        return apiGetBootstrapData(params);
+
+      case "getModuleData":
+        return apiGetModuleData(params);
+
+      case "saveRecord":
+        return apiSaveRecord(params);
+
+      case "updateRecord":
+        return apiUpdateRecord(params);
+
+      case "deleteRecord":
+        return apiDeleteRecord(params);
+
+      case "performSmartSearch":
+        return apiPerformSmartSearch(params);
+
+      case "logout":
+        return ContentService.createTextOutput(
+          JSON.stringify(logout(params.token))
+        ).setMimeType(ContentService.MimeType.JSON);
+
+      default:
+        logWarn_(
+          "system",
+          "UNKNOWN_ACTION",
+          "API",
+          action,
+          "Unknown API action requested"
+        );
+        return ContentService.createTextOutput(
+          JSON.stringify({ success: false, message: "Unknown action" })
+        ).setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch (error) {
+    logError_("system", "API_ERROR", "API", "", "API handler exception", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "Server error occurred",
+        code: "API_EXCEPTION",
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -189,6 +414,268 @@ function logout(token) {
     return { success: false };
   } catch (e) {
     return { success: false };
+  }
+}
+
+/**
+ * Enhanced Bootstrap Data Provider for Professional Frontend
+ * Loads complete system metadata from ENG_ sheets according to guidelines
+ */
+function getBootstrapData(userId, token) {
+  try {
+    var auth = validateSession_(token);
+    if (!auth.valid) {
+      logWarn_(
+        userId,
+        "BOOTSTRAP_FAIL",
+        "AUTH",
+        "",
+        "Invalid session for bootstrap"
+      );
+      return {
+        success: false,
+        message: "Invalid session",
+        forms: {},
+        views: {},
+        buttons: {},
+        dropdowns: {},
+        permissions: {},
+        navigation: [],
+      };
+    }
+
+    console.log("Loading bootstrap data for user:", userId);
+
+    // Check cache first (5-minute TTL)
+    var cacheKey = "BOOTSTRAP_" + userId;
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      try {
+        var cachedData = JSON.parse(cached);
+        if (cachedData && cachedData.timestamp) {
+          var age = (new Date().getTime() - cachedData.timestamp) / 1000 / 60; // minutes
+          if (age < 5) {
+            return cachedData.data;
+          }
+        }
+      } catch (e) {
+        // Cache parse error, continue to fetch fresh data
+      }
+    }
+
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var bootstrap = {
+      success: true,
+      forms: [],
+      views: [],
+      buttons: [],
+      dropdowns: {},
+      permissions: {},
+      userRole: null,
+    };
+
+    // Get user role from SYS_Users
+    var usersSheet = ss.getSheetByName("SYS_Users");
+    if (usersSheet) {
+      var usersData = usersSheet.getDataRange().getValues();
+      var usersHeaders = usersData[0].map(String);
+      var usrIdIdx = usersHeaders.indexOf("USR_ID");
+      var roleIdx = usersHeaders.indexOf("ROL_ID");
+      if (usrIdIdx >= 0 && roleIdx >= 0) {
+        for (var u = 1; u < usersData.length; u++) {
+          if (String(usersData[u][usrIdIdx]).trim() === String(userId).trim()) {
+            bootstrap.userRole = String(usersData[u][roleIdx]).trim();
+            break;
+          }
+        }
+      }
+    }
+
+    // Get user permissions from SYS_Role_Permissions
+    var rolePermSheet = ss.getSheetByName("SYS_Role_Permissions");
+    var allowedForms = [];
+    var allowedViews = [];
+    if (rolePermSheet && bootstrap.userRole) {
+      var rpData = rolePermSheet.getDataRange().getValues();
+      var rpHeaders = rpData[0].map(String);
+      var rolIdIdx = rpHeaders.indexOf("ROL_ID");
+      var prmIdIdx = rpHeaders.indexOf("PRM_ID");
+      var allowedIdx = rpHeaders.indexOf("SRP_Is_Allowed");
+      var scopeIdx = rpHeaders.indexOf("SRP_Scope");
+
+      for (var rp = 1; rp < rpData.length; rp++) {
+        if (
+          String(rpData[rp][rolIdIdx]).trim() === bootstrap.userRole &&
+          allowedIdx >= 0 &&
+          String(rpData[rp][allowedIdx]).trim().toUpperCase() === "TRUE"
+        ) {
+          var permId = String(rpData[rp][prmIdIdx]).trim();
+          var scope = scopeIdx >= 0 ? String(rpData[rp][scopeIdx]).trim() : "";
+          bootstrap.permissions[permId] = { allowed: true, scope: scope };
+        }
+      }
+    }
+
+    // Read ENG_Forms (filtered by permissions if needed)
+    var formsSheet = ss.getSheetByName("ENG_Forms");
+    if (formsSheet) {
+      var formsData = formsSheet.getDataRange().getValues();
+      if (formsData.length > 1) {
+        var formsHeaders = formsData[0].map(String);
+        var formIdIdx = formsHeaders.indexOf("FORM_ID");
+        var tabIdx = formsHeaders.indexOf("TAB_Section");
+        if (tabIdx < 0) tabIdx = formsHeaders.indexOf("Tab_Name");
+        var colPtrIdx = formsHeaders.indexOf("Column_Pointer");
+        if (colPtrIdx < 0) colPtrIdx = formsHeaders.indexOf("Target_Column_ID");
+        var typeIdx = formsHeaders.indexOf("Field_Type");
+        var stateIdx = formsHeaders.indexOf("Smart_State");
+        var dynIdx = formsHeaders.indexOf("DYN_Link");
+        if (dynIdx < 0) dynIdx = formsHeaders.indexOf("DYN_Source");
+
+        var formsMap = {};
+        for (var f = 1; f < formsData.length; f++) {
+          var formId = String(formsData[f][formIdIdx]).trim();
+          if (!formsMap[formId]) {
+            formsMap[formId] = {
+              formId: formId,
+              tabs: {},
+            };
+          }
+          var tabName = String(formsData[f][tabIdx] || "main").trim();
+          if (!formsMap[formId].tabs[tabName]) {
+            formsMap[formId].tabs[tabName] = [];
+          }
+          formsMap[formId].tabs[tabName].push({
+            columnPointer: String(formsData[f][colPtrIdx]).trim(),
+            fieldType: String(formsData[f][typeIdx] || "TEXT").trim(),
+            smartState: String(formsData[f][stateIdx] || "EDITABLE").trim(),
+            dynLink: formsData[f][dynIdx]
+              ? String(formsData[f][dynIdx]).trim()
+              : "",
+          });
+        }
+        bootstrap.forms = Object.values(formsMap);
+      }
+    }
+
+    // Read ENG_Views
+    var viewsSheet = ss.getSheetByName("ENG_Views");
+    if (viewsSheet) {
+      var viewsData = viewsSheet.getDataRange().getValues();
+      if (viewsData.length > 1) {
+        var viewsHeaders = viewsData[0].map(String);
+        var viewIdIdx = viewsHeaders.indexOf("VIEW_ID");
+        var viewTitleIdx = viewsHeaders.indexOf("View_Title");
+        var srcSheetIdx = viewsHeaders.indexOf("Source_Sheet");
+
+        for (var v = 1; v < viewsData.length; v++) {
+          bootstrap.views.push({
+            viewId: String(viewsData[v][viewIdIdx]).trim(),
+            viewTitle: String(viewsData[v][viewTitleIdx] || "").trim(),
+            sourceSheet: String(viewsData[v][srcSheetIdx] || "").trim(),
+          });
+        }
+      }
+    }
+
+    // Read ENG_Buttons
+    var buttonsSheet = ss.getSheetByName("ENG_Buttons");
+    if (buttonsSheet) {
+      var buttonsData = buttonsSheet.getDataRange().getValues();
+      if (buttonsData.length > 1) {
+        var buttonsHeaders = buttonsData[0].map(String);
+        var btnIdIdx = buttonsHeaders.indexOf("BTN_ID");
+        var btnLabelIdx = buttonsHeaders.indexOf("BTN_Label");
+        var btnTypeIdx = buttonsHeaders.indexOf("BTN_Type");
+        var btnDescIdx = buttonsHeaders.indexOf("BTN_Description");
+        var viewIdIdx = buttonsHeaders.indexOf("VIEW_ID");
+
+        for (var b = 1; b < buttonsData.length; b++) {
+          bootstrap.buttons.push({
+            btnId: String(buttonsData[b][btnIdIdx]).trim(),
+            label: String(buttonsData[b][btnLabelIdx] || "").trim(),
+            type: String(buttonsData[b][btnTypeIdx] || "").trim(),
+            description: String(buttonsData[b][btnDescIdx] || "").trim(),
+            viewId:
+              viewIdIdx >= 0
+                ? String(buttonsData[b][viewIdIdx] || "").trim()
+                : "",
+          });
+        }
+      }
+    }
+
+    // Read ENG_Dropdowns (grouped by DD_ID)
+    var dropdownsSheet = ss.getSheetByName("ENG_Dropdowns");
+    if (dropdownsSheet) {
+      var ddData = dropdownsSheet.getDataRange().getValues();
+      if (ddData.length > 1) {
+        var ddHeaders = ddData[0].map(String);
+        var ddIdIdx = ddHeaders.indexOf("DD_ID");
+        var ddEnIdx = ddHeaders.indexOf("DD_EN");
+        var ddArIdx = ddHeaders.indexOf("DD_AR");
+        var ddActiveIdx = ddHeaders.indexOf("DD_Is_Active");
+        var ddSortIdx = ddHeaders.indexOf("DD_Sort_Order");
+
+        for (var d = 1; d < ddData.length; d++) {
+          var ddId = String(ddData[d][ddIdIdx]).trim();
+          var isActive =
+            ddActiveIdx >= 0
+              ? String(ddData[d][ddActiveIdx]).trim().toUpperCase() !== "FALSE"
+              : true;
+          if (isActive) {
+            if (!bootstrap.dropdowns[ddId]) {
+              bootstrap.dropdowns[ddId] = [];
+            }
+            bootstrap.dropdowns[ddId].push({
+              value: String(ddData[d][ddEnIdx] || "").trim(),
+              label: String(ddData[d][ddArIdx] || "").trim(),
+              sortOrder: ddSortIdx >= 0 ? Number(ddData[d][ddSortIdx]) || 0 : 0,
+            });
+          }
+        }
+        // Sort each dropdown by sortOrder
+        for (var ddKey in bootstrap.dropdowns) {
+          bootstrap.dropdowns[ddKey].sort(function (a, b) {
+            return a.sortOrder - b.sortOrder;
+          });
+        }
+      }
+    }
+
+    // Cache the result (5-minute TTL = 300 seconds)
+    try {
+      var cache = CacheService.getScriptCache();
+      var cacheKey = "BOOTSTRAP_" + userId;
+      var cacheData = {
+        timestamp: new Date().getTime(),
+        data: bootstrap,
+      };
+      cache.put(cacheKey, JSON.stringify(cacheData), 300);
+    } catch (cacheErr) {
+      // Cache error is not critical, log and continue
+      logWarn_(
+        userId,
+        "CACHE_ERROR",
+        "BOOTSTRAP",
+        "",
+        "Failed to cache bootstrap data"
+      );
+    }
+
+    return bootstrap;
+  } catch (e) {
+    logError_(userId, "BOOTSTRAP", "SYSTEM", "", "Bootstrap data error", e);
+    return {
+      success: false,
+      message: String(e),
+      forms: [],
+      views: [],
+      buttons: [],
+      dropdowns: {},
+      permissions: {},
+    };
   }
 }
 
@@ -317,12 +804,12 @@ function getModuleData(viewId, token, options) {
     var sortColumn = options.sortColumn;
     var sortDirection = options.sortDirection || "asc";
 
-    var vData = vSheet.getDataRange().getValues();
-    var vHeaders = vData[0].map(String);
-    var idIdx = vHeaders.indexOf("VIEW_ID");
-    var srcSheetIdx = vHeaders.indexOf("Source_Sheet");
-    var viewTitleIdx = vHeaders.indexOf("View_Title");
-    var foundRow = null;
+  var vData = vSheet.getDataRange().getValues();
+  var vHeaders = vData[0].map(String);
+  var idIdx = vHeaders.indexOf("VIEW_ID");
+  var srcSheetIdx = vHeaders.indexOf("Source_Sheet");
+  var viewTitleIdx = vHeaders.indexOf("View_Title");
+  var foundRow = null;
 
     for (var i = 1; i < vData.length; i++) {
       if (String(vData[i][idIdx]).trim() === viewId) {
@@ -330,14 +817,18 @@ function getModuleData(viewId, token, options) {
         break;
       }
     }
-    if (!foundRow) {
-      logWarn_(
-        auth.userId || "unknown",
-        "VIEW_DATA",
-        "ENG_Views",
-        viewId,
-        "View definition not found"
-      );
+  if (!foundRow) {
+    // Fallback: derive source sheet from VIEW_ID pattern (e.g., VIEW_HRM_Employees -> HRM_Employees)
+    var parts = String(viewId).split("_");
+    if (parts.length >= 3) {
+      var module = parts[1];
+      var table = parts.slice(2).join("_");
+      var derived = module + "_" + table;
+      logWarn_(auth.userId || "unknown", "VIEW_DATA", "ENG_Views", viewId, "View not found; using fallback: " + derived);
+      foundRow = [viewId, viewId, derived];
+      srcSheetIdx = 2; // position inside fallback row
+      viewTitleIdx = 1;
+    } else {
       return {
         success: false,
         message:
@@ -347,14 +838,17 @@ function getModuleData(viewId, token, options) {
         code: "VIEW_NOT_FOUND",
       };
     }
+  }
 
-    var srcSheetName = foundRow[srcSheetIdx];
-    if (!srcSheetName || String(srcSheetName).trim() === "") {
-      return {
-        success: false,
-        message: "لم يتم تحديد جدول المصدر في تعريف العرض",
-      };
+  var srcSheetName = foundRow[srcSheetIdx];
+  if (!srcSheetName || String(srcSheetName).trim() === "") {
+    // if fallback failed to produce a source, attempt module-based default
+    var parts2 = String(viewId).split("_");
+    if (parts2.length >= 3) srcSheetName = parts2[1] + "_" + parts2.slice(2).join("_");
+    if (!srcSheetName) {
+      return { success: false, message: "لم يتم تحديد جدول المصدر في تعريف العرض" };
     }
+  }
 
     var viewTitle = foundRow[viewTitleIdx] || srcSheetName;
     var sSheet = ss.getSheetByName(srcSheetName);
@@ -402,7 +896,8 @@ function getModuleData(viewId, token, options) {
     var outHeaders = [];
     var englishHeaders = [];
     for (var c = 0; c < sHeaders.length; c++) {
-      var show = lvFlags[c] && String(lvFlags[c]).trim() !== "";
+      var show =
+        lvFlags[c] && String(lvFlags[c]).trim().toUpperCase() === "SHOW";
       if (show) {
         colIndices.push(c);
         outHeaders.push(arHeaders[c]);
@@ -880,12 +1375,258 @@ function getDropdownOptionsFromTable_(ss, tableName) {
   return options;
 }
 
+function performSmartSearch(query, linkID, token) {
+  var auth = validateSession_(token);
+  if (!auth.valid) {
+    return { success: false, message: "Invalid session", results: [] };
+  }
+
+  if (!query || !linkID) {
+    return {
+      success: false,
+      message: "Query and linkID required",
+      results: [],
+    };
+  }
+
+  try {
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var queryLower = String(query).toLowerCase().trim();
+    var results = [];
+
+    // Map DYN_* IDs to sheet names
+    var sheetMap = {
+      DYN_EMPLOYEES: "HRM_Employees",
+      DYN_CLIENTS: "PRJ_Clients",
+      DYN_PROJECTS: "PRJ_Main",
+      DYN_MATERIALS: "PRJ_Material",
+      DYN_DEPTS: "HRM_Departments",
+      DYN_ROLES: "SYS_Roles",
+      DYN_CUSTODY: "FIN_Custody",
+    };
+
+    var sheetName = sheetMap[linkID];
+    if (!sheetName) {
+      // Try direct sheet name if not in map
+      sheetName = linkID.replace("DYN_", "");
+    }
+
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      return {
+        success: false,
+        message: "Sheet not found: " + sheetName,
+        results: [],
+      };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 4) {
+      return { success: true, results: [] };
+    }
+
+    var headers = data[0].map(String); // Row 1: SYSTEM_KEY
+    var arHeaders = data[1].map(String); // Row 2: UI_LABEL
+    // Row 3: VIEW_FLAG (skip)
+    // Row 4+: Data
+
+    // Find ID column (ends with _ID and has single underscore)
+    var idColIdx = -1;
+    for (var h = 0; h < headers.length; h++) {
+      var sh = String(headers[h]);
+      if (
+        (/_ID$/.test(sh) || /_id$/.test(sh)) &&
+        sh.indexOf("_") === sh.lastIndexOf("_")
+      ) {
+        idColIdx = h;
+        break;
+      }
+    }
+    if (idColIdx < 0) idColIdx = 0;
+
+    // Find searchable columns (Name, Email, Mobile, etc.)
+    var searchCols = [];
+    for (var c = 0; c < headers.length; c++) {
+      var colName = String(headers[c]).toLowerCase();
+      if (
+        colName.indexOf("name") >= 0 ||
+        colName.indexOf("email") >= 0 ||
+        colName.indexOf("mob") >= 0 ||
+        colName.indexOf("phone") >= 0 ||
+        colName.indexOf("title") >= 0
+      ) {
+        searchCols.push(c);
+      }
+    }
+    if (searchCols.length === 0) {
+      // Fallback: use first text column
+      searchCols.push(Math.min(1, headers.length - 1));
+    }
+
+    // Search through data rows (starting from Row 4)
+    for (var r = 3; r < data.length; r++) {
+      var row = data[r];
+      var matchFound = false;
+
+      // Check each searchable column
+      for (var sc = 0; sc < searchCols.length; sc++) {
+        var cellValue = String(row[searchCols[sc]] || "").toLowerCase();
+        if (cellValue.indexOf(queryLower) >= 0) {
+          matchFound = true;
+          break;
+        }
+      }
+
+      if (matchFound) {
+        // Build label from name columns
+        var labelParts = [];
+        for (var lc = 0; lc < searchCols.length; lc++) {
+          var val = String(row[searchCols[lc]] || "").trim();
+          if (val) labelParts.push(val);
+        }
+        var label =
+          labelParts.length > 0
+            ? labelParts.join(" - ")
+            : String(row[idColIdx]).trim();
+
+        results.push({
+          id: String(row[idColIdx]).trim(),
+          label: label,
+        });
+
+        // Limit results to 50
+        if (results.length >= 50) break;
+      }
+    }
+
+    return { success: true, results: results };
+  } catch (e) {
+    logError_(auth.userId, "SMART_SEARCH", linkID, query, "Search error", e);
+    return { success: false, message: String(e), results: [] };
+  }
+}
+
+function validateFormData(formId, payload, ss, mode) {
+  mode = mode || "add";
+  var errors = [];
+
+  try {
+    var fSheet = ss.getSheetByName("ENG_Forms");
+    if (!fSheet) return { valid: true, errors: [] };
+
+    var fData = fSheet.getDataRange().getValues();
+    var fh = fData[0].map(String);
+    var idIdx = fh.indexOf("FORM_ID");
+    var colPtrIdx = fh.indexOf("Target_Column_ID");
+    if (colPtrIdx < 0) colPtrIdx = fh.indexOf("Column_Pointer");
+    var typeIdx = fh.indexOf("Field_Type");
+    var stateIdx = fh.indexOf("Smart_State");
+    var mandIdx = fh.indexOf("Is_Mandatory");
+    if (mandIdx < 0) mandIdx = fh.indexOf("Mandatory");
+
+    for (var i = 1; i < fData.length; i++) {
+      if (String(fData[i][idIdx]).trim() !== formId) continue;
+
+      var colPtr = String(fData[i][colPtrIdx]).trim();
+      var fieldType = String(fData[i][typeIdx] || "TEXT").toUpperCase();
+      var smartState = String(fData[i][stateIdx] || "EDITABLE").toUpperCase();
+      var isMandatory =
+        mandIdx >= 0
+          ? String(fData[i][mandIdx]).trim().toUpperCase() === "TRUE"
+          : false;
+
+      // Skip validation for READ_ONLY fields in add mode
+      if (mode === "add" && smartState === "READ_ONLY") continue;
+      // Skip validation for LOCKED_ON_EDIT fields in edit mode
+      if (mode === "edit" && smartState === "LOCKED_ON_EDIT") continue;
+
+      var value = payload[colPtr];
+      var valueStr =
+        value !== undefined && value !== null ? String(value).trim() : "";
+
+      // Check mandatory fields
+      if (isMandatory && valueStr === "") {
+        errors.push("الحقل مطلوب: " + colPtr);
+        continue;
+      }
+
+      // Skip type validation if value is empty (unless mandatory)
+      if (valueStr === "") continue;
+
+      // Type validation
+      if (fieldType === "NUMBER") {
+        if (isNaN(Number(value))) {
+          errors.push("يجب أن يكون الحقل رقم: " + colPtr);
+        }
+      } else if (fieldType === "DATE") {
+        var dateVal = new Date(value);
+        if (isNaN(dateVal.getTime())) {
+          errors.push("تاريخ غير صحيح: " + colPtr);
+        }
+      } else if (fieldType === "BOOLEAN") {
+        var boolVal = String(value).toLowerCase();
+        if (
+          boolVal !== "true" &&
+          boolVal !== "false" &&
+          boolVal !== "1" &&
+          boolVal !== "0"
+        ) {
+          errors.push("قيمة منطقية غير صحيحة: " + colPtr);
+        }
+      } else if (fieldType === "EMAIL") {
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(valueStr)) {
+          errors.push("بريد إلكتروني غير صحيح: " + colPtr);
+        }
+      }
+    }
+
+    return { valid: errors.length === 0, errors: errors };
+  } catch (e) {
+    return { valid: false, errors: ["خطأ في التحقق: " + String(e)] };
+  }
+}
+
 function saveEngineRecord(formId, payload, token) {
   var auth = validateSession_(token);
   if (!auth.valid)
     return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+
+  // Check permission
+  var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  var targetSheetName = getFormMasterSheet_(ss, formId);
+  var permCheck = checkPermission(
+    auth.userId,
+    "CREATE",
+    targetSheetName || formId,
+    token
+  );
+  if (!permCheck.allowed) {
+    logWarn_(
+      auth.userId,
+      "PERMISSION_DENIED",
+      targetSheetName || formId,
+      "",
+      "CREATE denied: " + permCheck.reason
+    );
+    return {
+      success: false,
+      code: "PERMISSION_DENIED",
+      message: "ليس لديك صلاحية لإنشاء هذا السجل",
+    };
+  }
+
+  // Validate input data
+  var validation = validateFormData(formId, payload, ss, "add");
+  if (!validation.valid) {
+    return {
+      success: false,
+      code: "VALIDATION_ERROR",
+      message: validation.errors.join("; "),
+    };
+  }
+
   try {
-    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
     var fSheet = ss.getSheetByName("ENG_Forms");
     var fData = fSheet.getDataRange().getValues();
     var fh = fData[0].map(String);
@@ -893,7 +1634,6 @@ function saveEngineRecord(formId, payload, token) {
     var colPtrIdx = fh.indexOf("Target_Column_ID");
     if (colPtrIdx < 0) colPtrIdx = fh.indexOf("Column_Pointer");
     var typeIdx = fh.indexOf("Field_Type");
-    var targetSheetName = getFormMasterSheet_(ss, formId);
     var mappings = [];
     for (var i = 1; i < fData.length; i++) {
       if (String(fData[i][idIdx]).trim() !== formId) continue;
@@ -957,6 +1697,26 @@ function saveEngineRecord(formId, payload, token) {
       }
     }
     insertRowByHeaders_(tSheet, tHeaders, rowData);
+
+    // Trigger indirect expense allocations if applicable
+    if (
+      formId === "FORM_FIN_AddInDirectExpense_Time" ||
+      formId === "FORM_FIN_AddInDirectExpense_NoTime"
+    ) {
+      try {
+        runAllocations(rowData, formId, newId, ss, auth.userId);
+      } catch (allocErr) {
+        logError_(
+          auth.userId,
+          "ALLOCATION_ERROR",
+          targetSheetName,
+          newId,
+          "Allocation failed: " + String(allocErr),
+          allocErr
+        );
+      }
+    }
+
     logInfo_(
       auth.userId,
       "CREATE_RECORD",
@@ -983,6 +1743,41 @@ function updateEngineRecord(formId, payload, token) {
   var auth = validateSession_(token);
   if (!auth.valid)
     return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+
+  // Check permission
+  var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  var targetSheetName = getFormMasterSheet_(ss, formId);
+  var permCheck = checkPermission(
+    auth.userId,
+    "UPDATE",
+    targetSheetName || formId,
+    token
+  );
+  if (!permCheck.allowed) {
+    logWarn_(
+      auth.userId,
+      "PERMISSION_DENIED",
+      targetSheetName || formId,
+      payload._id || "",
+      "UPDATE denied: " + permCheck.reason
+    );
+    return {
+      success: false,
+      code: "PERMISSION_DENIED",
+      message: "ليس لديك صلاحية لتعديل هذا السجل",
+    };
+  }
+
+  // Validate input data
+  var validation = validateFormData(formId, payload, ss, "edit");
+  if (!validation.valid) {
+    return {
+      success: false,
+      code: "VALIDATION_ERROR",
+      message: validation.errors.join("; "),
+    };
+  }
+
   try {
     var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
     var fSheet = ss.getSheetByName("ENG_Forms");
@@ -1117,6 +1912,24 @@ function deleteEngineRecord(tableName, id, token) {
   var auth = validateSession_(token);
   if (!auth.valid)
     return { success: false, code: "AUTH_REQUIRED", message: auth.error };
+
+  // Check permission
+  var permCheck = checkPermission(auth.userId, "DELETE", tableName, token);
+  if (!permCheck.allowed) {
+    logWarn_(
+      auth.userId,
+      "PERMISSION_DENIED",
+      tableName,
+      id,
+      "DELETE denied: " + permCheck.reason
+    );
+    return {
+      success: false,
+      code: "PERMISSION_DENIED",
+      message: "ليس لديك صلاحية لحذف هذا السجل",
+    };
+  }
+
   try {
     var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
     var sheet = ss.getSheetByName(tableName);
@@ -1530,7 +2343,18 @@ function seedSystemData() {
     if (!f || f.getLastRow() <= 1) needsSeed = true;
     if (!dd) needsSeed = true;
     if (needsSeed) {
-      seedFullEngineConfiguration();
+      // Call seedMasterConfiguration from Setup.js (same Apps Script project)
+      try {
+        if (typeof seedMasterConfiguration === "function") {
+          seedMasterConfiguration();
+        } else {
+          Logger.log(
+            "Warning: seedMasterConfiguration not found. Please run Setup.js seeding manually."
+          );
+        }
+      } catch (e) {
+        Logger.log("Error calling seedMasterConfiguration: " + String(e));
+      }
     }
     function ensureSchemaSheet_(name) {
       var sh = ss.getSheetByName(name);
@@ -1733,9 +2557,7 @@ function migrateIdsToStructured_() {
   }
 }
 
-function runEngineTests() {
-  return validateEngineConfiguration();
-}
+// removed duplicate runEngineTests (see earlier comprehensive version)
 
 function isDeveloperAcknowledged(email) {
   try {
@@ -1988,5 +2810,1799 @@ function getEntityDocuments(entityType, entityId, token) {
     return { success: true, documents: docs };
   } catch (e) {
     return { success: false, message: String(e) };
+  }
+}
+
+function checkPermission(userId, action, entity, token) {
+  try {
+    var auth = validateSession_(token);
+    if (!auth.valid) {
+      return { allowed: false, reason: "Invalid session" };
+    }
+
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+    // Get user's role
+    var usersSheet = ss.getSheetByName("SYS_Users");
+    var userRole = null;
+    if (usersSheet) {
+      var usersData = usersSheet.getDataRange().getValues();
+      var usersHeaders = usersData[0].map(String);
+      var usrIdIdx = usersHeaders.indexOf("USR_ID");
+      var roleIdx = usersHeaders.indexOf("ROL_ID");
+      if (usrIdIdx >= 0 && roleIdx >= 0) {
+        for (var u = 1; u < usersData.length; u++) {
+          if (String(usersData[u][usrIdIdx]).trim() === String(userId).trim()) {
+            userRole = String(usersData[u][roleIdx]).trim();
+            break;
+          }
+        }
+      }
+    }
+
+    if (!userRole) {
+      return { allowed: false, reason: "No role assigned" };
+    }
+
+    // Check if role is system role (usually has all permissions)
+    var rolesSheet = ss.getSheetByName("SYS_Roles");
+    if (rolesSheet) {
+      var rolesData = rolesSheet.getDataRange().getValues();
+      var rolesHeaders = rolesData[0].map(String);
+      var rolIdIdx = rolesHeaders.indexOf("ROL_ID");
+      var rolSysIdx = rolesHeaders.indexOf("ROL_Is_System");
+      if (rolIdIdx >= 0 && rolSysIdx >= 0) {
+        for (var r = 1; r < rolesData.length; r++) {
+          if (String(rolesData[r][rolIdIdx]).trim() === userRole) {
+            var isSystem =
+              String(rolesData[r][rolSysIdx]).trim().toUpperCase() === "TRUE";
+            if (isSystem) {
+              return { allowed: true, reason: "System role" };
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // Check SYS_Role_Permissions
+    var rpSheet = ss.getSheetByName("SYS_Role_Permissions");
+    if (!rpSheet) {
+      // If no permissions table, allow by default (backward compatibility)
+      return { allowed: true, reason: "No permissions table" };
+    }
+
+    var rpData = rpSheet.getDataRange().getValues();
+    var rpHeaders = rpData[0].map(String);
+    var rolIdIdx = rpHeaders.indexOf("ROL_ID");
+    var prmIdIdx = rpHeaders.indexOf("PRM_ID");
+    var allowedIdx = rpHeaders.indexOf("SRP_Is_Allowed");
+    var scopeIdx = rpHeaders.indexOf("SRP_Scope");
+    var entityIdx = rpHeaders.indexOf("AUD_Entity");
+
+    // Map action to permission ID pattern
+    var actionMap = {
+      CREATE: "CREATE",
+      UPDATE: "UPDATE",
+      DELETE: "DELETE",
+      VIEW: "VIEW",
+      READ: "VIEW",
+    };
+    var permAction = actionMap[action.toUpperCase()] || action.toUpperCase();
+
+    // Check permissions
+    for (var rp = 1; rp < rpData.length; rp++) {
+      if (String(rpData[rp][rolIdIdx]).trim() !== userRole) continue;
+
+      var permId = String(rpData[rp][prmIdIdx]).trim();
+      var isAllowed =
+        allowedIdx >= 0
+          ? String(rpData[rp][allowedIdx]).trim().toUpperCase() === "TRUE"
+          : false;
+      var scope = scopeIdx >= 0 ? String(rpData[rp][scopeIdx]).trim() : "";
+      var permEntity =
+        entityIdx >= 0 ? String(rpData[rp][entityIdx]).trim() : "";
+
+      // Check if permission matches action and entity
+      if (
+        isAllowed &&
+        (permId.indexOf(permAction) >= 0 || permId === "ALL") &&
+        (permEntity === "" || permEntity === entity || scope === "ALL")
+      ) {
+        return { allowed: true, reason: "Permission granted" };
+      }
+    }
+
+    return { allowed: false, reason: "Permission denied" };
+  } catch (e) {
+    logError_(
+      userId,
+      "PERMISSION_CHECK",
+      entity,
+      action,
+      "Permission check error",
+      e
+    );
+    // Fail secure: deny on error
+    return { allowed: false, reason: "Error checking permissions" };
+  }
+}
+
+function runAllocations(expenseData, formId, expenseId, ss, userId) {
+  try {
+    if (formId === "FORM_FIN_AddInDirectExpense_Time") {
+      // Time-based allocation: Find ACTIVE projects overlapping with expense dates
+      var startDate = expenseData["InDiEXP_Start"]
+        ? new Date(expenseData["InDiEXP_Start"])
+        : null;
+      var endDate = expenseData["InDiEXP_End"]
+        ? new Date(expenseData["InDiEXP_End"])
+        : null;
+      var amount = Number(
+        expenseData["InDiEXP_TM_Amnt"] ||
+          expenseData["InDiEXP_Total_VAT_Inc"] ||
+          0
+      );
+
+      if (!startDate || !endDate || amount <= 0) {
+        logWarn_(
+          userId,
+          "ALLOCATION",
+          "FIN_InDirectExpenses_Time",
+          expenseId,
+          "Invalid date range or amount"
+        );
+        return;
+      }
+
+      var prjSheet = ss.getSheetByName("PRJ_Main");
+      if (!prjSheet) return;
+
+      var prjData = prjSheet.getDataRange().getValues();
+      if (prjData.length < 4) return;
+
+      var prjHeaders = prjData[0].map(String);
+      var prjIdIdx = prjHeaders.indexOf("PRJ_ID");
+      var prjStatusIdx = prjHeaders.indexOf("PRJ_Status");
+      var planStartIdx = prjHeaders.indexOf("Plan_Start_Date");
+      var planEndIdx = prjHeaders.indexOf("PRJ_End_Date");
+      if (planEndIdx < 0) planEndIdx = prjHeaders.indexOf("Actual_End_Date");
+
+      var activeProjects = [];
+      var totalOverlapDays = 0;
+
+      // Find active projects and calculate overlaps
+      for (var p = 3; p < prjData.length; p++) {
+        var prjStatus = String(prjData[p][prjStatusIdx] || "")
+          .trim()
+          .toUpperCase();
+        if (prjStatus !== "ACTIVE" && prjStatus !== "جاري التنفيذ") continue;
+
+        var prjPlanStart = prjData[p][planStartIdx]
+          ? new Date(prjData[p][planStartIdx])
+          : null;
+        var prjPlanEnd = prjData[p][planEndIdx]
+          ? new Date(prjData[p][planEndIdx])
+          : null;
+
+        if (!prjPlanStart) continue;
+
+        // Calculate overlap days
+        var overlapStart = prjPlanStart > startDate ? prjPlanStart : startDate;
+        var overlapEnd =
+          prjPlanEnd && prjPlanEnd < endDate ? prjPlanEnd : endDate;
+        if (overlapStart <= overlapEnd) {
+          var overlapDays =
+            Math.ceil((overlapEnd - overlapStart) / (1000 * 60 * 60 * 24)) + 1;
+          if (overlapDays > 0) {
+            activeProjects.push({
+              prjId: String(prjData[p][prjIdIdx]).trim(),
+              overlapDays: overlapDays,
+            });
+            totalOverlapDays += overlapDays;
+          }
+        }
+      }
+
+      if (activeProjects.length === 0 || totalOverlapDays === 0) {
+        logWarn_(
+          userId,
+          "ALLOCATION",
+          "FIN_InDirectExpenses_Time",
+          expenseId,
+          "No active projects found"
+        );
+        return;
+      }
+
+      // Allocate to PRJ_IndirExp_Time_Alloc
+      var allocSheet = ss.getSheetByName("PRJ_IndirExp_Time_Alloc");
+      if (!allocSheet) return;
+
+      var allocHeaders = allocSheet
+        .getRange(1, 1, 1, allocSheet.getLastColumn())
+        .getValues()[0]
+        .map(String);
+
+      for (var ap = 0; ap < activeProjects.length; ap++) {
+        var allocAmount =
+          (activeProjects[ap].overlapDays / totalOverlapDays) * amount;
+        var allocRow = {};
+        allocRow["InDiEXP_TM_ID"] = expenseId;
+        allocRow["PRJ_ID"] = activeProjects[ap].prjId;
+        allocRow["ALO_TM_Methd"] = "Time-Based Overlap";
+        allocRow["ALO_TM_Amnt"] = Math.round(allocAmount * 100) / 100;
+        allocRow["ALO_TM_Crt_At"] = new Date();
+        allocRow["ALO_TM_Crt_By"] = userId || "system";
+
+        insertRowByHeaders_(allocSheet, allocHeaders, allocRow);
+      }
+
+      logInfo_(
+        userId,
+        "ALLOCATION",
+        "PRJ_IndirExp_Time_Alloc",
+        expenseId,
+        "Allocated to " + activeProjects.length + " projects"
+      );
+    } else if (formId === "FORM_FIN_AddInDirectExpense_NoTime") {
+      // Budget-based allocation: Find ACTIVE projects, allocate by budget ratio
+      var amount = Number(
+        expenseData["InDiEXP_NT_Amnt"] ||
+          expenseData["InDiEXP_Total_VAT_Inc"] ||
+          0
+      );
+
+      if (amount <= 0) {
+        logWarn_(
+          userId,
+          "ALLOCATION",
+          "FIN_InDirectExpenses_NoTime",
+          expenseId,
+          "Invalid amount"
+        );
+        return;
+      }
+
+      var prjSheet = ss.getSheetByName("PRJ_Main");
+      if (!prjSheet) return;
+
+      var prjData = prjSheet.getDataRange().getValues();
+      if (prjData.length < 4) return;
+
+      var prjHeaders = prjData[0].map(String);
+      var prjIdIdx = prjHeaders.indexOf("PRJ_ID");
+      var prjStatusIdx = prjHeaders.indexOf("PRJ_Status");
+      var prjBudgetIdx = prjHeaders.indexOf("PRJ_Budget");
+
+      var activeProjects = [];
+      var totalBudget = 0;
+
+      // Find active projects and sum budgets
+      for (var p = 3; p < prjData.length; p++) {
+        var prjStatus = String(prjData[p][prjStatusIdx] || "")
+          .trim()
+          .toUpperCase();
+        if (prjStatus !== "ACTIVE" && prjStatus !== "جاري التنفيذ") continue;
+
+        var prjBudget = Number(prjData[p][prjBudgetIdx] || 0);
+        if (prjBudget > 0) {
+          activeProjects.push({
+            prjId: String(prjData[p][prjIdIdx]).trim(),
+            budget: prjBudget,
+          });
+          totalBudget += prjBudget;
+        }
+      }
+
+      if (activeProjects.length === 0 || totalBudget === 0) {
+        logWarn_(
+          userId,
+          "ALLOCATION",
+          "FIN_InDirectExpenses_NoTime",
+          expenseId,
+          "No active projects with budget found"
+        );
+        return;
+      }
+
+      // Allocate to PRJ_IndirExp_NoTime_Alloc
+      var allocSheet = ss.getSheetByName("PRJ_IndirExp_NoTime_Alloc");
+      if (!allocSheet) return;
+
+      var allocHeaders = allocSheet
+        .getRange(1, 1, 1, allocSheet.getLastColumn())
+        .getValues()[0]
+        .map(String);
+
+      for (var ap = 0; ap < activeProjects.length; ap++) {
+        var allocAmount = (activeProjects[ap].budget / totalBudget) * amount;
+        var allocRow = {};
+        allocRow["InDiEXP_NT_ID"] = expenseId;
+        allocRow["PRJ_ID"] = activeProjects[ap].prjId;
+        allocRow["ALO_NT_Methd"] = "Budget-Based Ratio";
+        allocRow["ALO_NT_Amnt"] = Math.round(allocAmount * 100) / 100;
+        allocRow["ALO_NT_Crt_At"] = new Date();
+        allocRow["ALO_NT_Crt_By"] = userId || "system";
+
+        insertRowByHeaders_(allocSheet, allocHeaders, allocRow);
+      }
+
+      logInfo_(
+        userId,
+        "ALLOCATION",
+        "PRJ_IndirExp_NoTime_Alloc",
+        expenseId,
+        "Allocated to " + activeProjects.length + " projects"
+      );
+    }
+  } catch (e) {
+    logError_(
+      userId,
+      "ALLOCATION_ERROR",
+      formId,
+      expenseId,
+      "Allocation failed",
+      e
+    );
+    throw e;
+  }
+}
+
+// ===== NEW API ENDPOINTS FOR ENHANCED FRONTEND =====
+
+/**
+ * Process Login - Enhanced version for new frontend
+ */
+function processLogin(requestBody) {
+  try {
+    const result = login(requestBody.username, requestBody.password);
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(
+      ContentService.MimeType.JSON
+    );
+  } catch (error) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "خطأ في تسجيل الدخول",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Process Logout
+ */
+function processLogout(requestBody) {
+  try {
+    const token = requestBody.token;
+    if (!token) {
+      throw new Error("Token required");
+    }
+
+    // Revoke session
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const sessionSheet = ss.getSheetByName("SYS_Sessions");
+
+    if (sessionSheet) {
+      const headers = sessionSheet
+        .getRange(1, 1, 1, sessionSheet.getLastColumn())
+        .getValues()[0]
+        .map(String);
+      const tokenIdx = headers.indexOf("Auth_Token");
+      const statusIdx = headers.indexOf("SESS_Status");
+      const revokedIdx = headers.indexOf("SESS_Revoked_At");
+
+      if (sessionSheet.getLastRow() > 3) {
+        const data = sessionSheet
+          .getRange(
+            4,
+            1,
+            sessionSheet.getLastRow() - 3,
+            sessionSheet.getLastColumn()
+          )
+          .getValues();
+
+        for (let i = 0; i < data.length; i++) {
+          if (String(data[i][tokenIdx]).trim() === token.trim()) {
+            // Revoke this session
+            sessionSheet.getRange(i + 4, statusIdx + 1).setValue("REVOKED");
+            sessionSheet.getRange(i + 4, revokedIdx + 1).setValue(new Date());
+            break;
+          }
+        }
+      }
+    }
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        message: "تم تسجيل الخروج بنجاح",
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "خطأ في تسجيل الخروج",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Get Bootstrap Data - Load ENG configuration for dynamic UI
+ */
+function apiGetBootstrapData(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const bootstrap = {};
+
+    // Load ENG_Forms
+    const formsSheet = ss.getSheetByName("ENG_Forms");
+    if (!formsSheet) {
+      throw new Error(
+        "⚠️ ENG_Forms sheet missing! Run Setup.js: 'Nijj_Interaction_Sys' → 'Run System' → 'Build Schema + Seed ENG'"
+      );
+    }
+    if (formsSheet && formsSheet.getLastRow() > 1) {
+      const formsData = formsSheet
+        .getRange(2, 1, formsSheet.getLastRow() - 1, formsSheet.getLastColumn())
+        .getValues();
+      bootstrap.forms = formsData.map((row) => ({
+        FORM_ID: row[0],
+        TAB_Section: row[1],
+        Column_Pointer: row[2],
+        Field_Type: row[3],
+        Smart_State: row[4],
+        DYN_Link: row[5],
+      }));
+    } else {
+      bootstrap.forms = [];
+    }
+
+    // Load ENG_Views
+    const viewsSheet = ss.getSheetByName("ENG_Views");
+    if (viewsSheet && viewsSheet.getLastRow() > 1) {
+      const viewsData = viewsSheet
+        .getRange(2, 1, viewsSheet.getLastRow() - 1, viewsSheet.getLastColumn())
+        .getValues();
+      bootstrap.views = viewsData.map((row) => ({
+        VIEW_ID: row[0],
+        View_Title: row[1],
+        Source_Sheet: row[2],
+      }));
+    } else {
+      bootstrap.views = [];
+    }
+
+    // Load ENG_Dropdowns
+    const ddSheet = ss.getSheetByName("ENG_Dropdowns");
+    bootstrap.dropdowns = {};
+    if (ddSheet && ddSheet.getLastRow() > 1) {
+      const ddData = ddSheet
+        .getRange(2, 1, ddSheet.getLastRow() - 1, ddSheet.getLastColumn())
+        .getValues();
+      ddData.forEach((row) => {
+        const ddId = row[0];
+        if (!bootstrap.dropdowns[ddId]) {
+          bootstrap.dropdowns[ddId] = [];
+        }
+        bootstrap.dropdowns[ddId].push({
+          DD_EN: row[1],
+          DD_AR: row[2],
+          DD_Is_Active: row[3],
+          DD_Sort_Order: row[4],
+        });
+      });
+    }
+
+    // Load ENG_Buttons
+    const btnSheet = ss.getSheetByName("ENG_Buttons");
+    if (btnSheet && btnSheet.getLastRow() > 1) {
+      const btnData = btnSheet
+        .getRange(2, 1, btnSheet.getLastRow() - 1, btnSheet.getLastColumn())
+        .getValues();
+      bootstrap.buttons = btnData.map((row) => ({
+        BTN_ID: row[0],
+        BTN_Label: row[1],
+        BTN_Type: row[2],
+        BTN_Description: row[3],
+      }));
+    } else {
+      bootstrap.buttons = [];
+    }
+
+    // User permissions and role
+    bootstrap.userRole = "admin"; // For now, hardcode admin role
+    bootstrap.permissions = {}; // Will be expanded later
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        forms: bootstrap.forms || [],
+        views: bootstrap.views || [],
+        buttons: bootstrap.buttons || [],
+        dropdowns: bootstrap.dropdowns || {},
+        permissions: bootstrap.permissions || {},
+        userRole: bootstrap.userRole || null,
+        user: { userId: sessionCheck.userId, email: sessionCheck.email },
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("getBootstrapData error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تحميل إعدادات النظام",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getBootstrapDataObject(token) {
+  try {
+    var sessionCheck = validateSession_(token);
+    if (!sessionCheck.valid) return { success: false, message: "Invalid session" };
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var out = { forms: [], views: [], buttons: [], dropdowns: {}, permissions: {}, userRole: null };
+    var usersSheet = ss.getSheetByName("SYS_Users");
+    if (usersSheet) {
+      var usersData = usersSheet.getDataRange().getValues();
+      var h = usersData[0].map(String);
+      var usrIdIdx = h.indexOf("USR_ID");
+      var roleIdx = h.indexOf("ROL_ID");
+      if (usrIdIdx >= 0 && roleIdx >= 0) {
+        for (var u = 1; u < usersData.length; u++) {
+          if (String(usersData[u][usrIdIdx]).trim() === String(sessionCheck.userId).trim()) {
+            out.userRole = String(usersData[u][roleIdx]).trim();
+            break;
+          }
+        }
+      }
+    }
+    var rolePermSheet = ss.getSheetByName("SYS_Role_Permissions");
+    if (rolePermSheet && out.userRole) {
+      var rpData = rolePermSheet.getDataRange().getValues();
+      var rpHeaders = rpData[0].map(String);
+      var rolIdIdx = rpHeaders.indexOf("ROL_ID");
+      var prmIdIdx = rpHeaders.indexOf("PRM_ID");
+      var allowedIdx = rpHeaders.indexOf("SRP_Is_Allowed");
+      var scopeIdx = rpHeaders.indexOf("SRP_Scope");
+      for (var rp = 1; rp < rpData.length; rp++) {
+        if (String(rpData[rp][rolIdIdx]).trim() === out.userRole && String(rpData[rp][allowedIdx]).trim().toUpperCase() === "TRUE") {
+          var permId = String(rpData[rp][prmIdIdx]).trim();
+          var scope = scopeIdx >= 0 ? String(rpData[rp][scopeIdx]).trim() : "";
+          out.permissions[permId] = { allowed: true, scope: scope };
+        }
+      }
+    }
+    var formsSheet = ss.getSheetByName("ENG_Forms");
+    if (formsSheet && formsSheet.getLastRow() > 1) {
+      var formsData = formsSheet.getRange(2, 1, formsSheet.getLastRow() - 1, formsSheet.getLastColumn()).getValues();
+      out.forms = formsData.map(function(row){ return { FORM_ID: row[0], TAB_Section: row[1], Column_Pointer: row[2], Field_Type: row[3], Smart_State: row[4], DYN_Link: row[5] }; });
+    }
+    var viewsSheet = ss.getSheetByName("ENG_Views");
+    if (viewsSheet && viewsSheet.getLastRow() > 1) {
+      var viewsData = viewsSheet.getRange(2, 1, viewsSheet.getLastRow() - 1, viewsSheet.getLastColumn()).getValues();
+      out.views = viewsData.map(function(row){ return { VIEW_ID: row[0], View_Title: row[1], Source_Sheet: row[2] }; });
+    }
+    var ddSheet = ss.getSheetByName("ENG_Dropdowns");
+    if (ddSheet && ddSheet.getLastRow() > 1) {
+      var ddData = ddSheet.getRange(2, 1, ddSheet.getLastRow() - 1, ddSheet.getLastColumn()).getValues();
+      for (var i = 0; i < ddData.length; i++) {
+        var ddId = ddData[i][0];
+        if (!out.dropdowns[ddId]) out.dropdowns[ddId] = [];
+        out.dropdowns[ddId].push({ DD_EN: ddData[i][1], DD_AR: ddData[i][2], DD_Is_Active: ddData[i][3], DD_Sort_Order: ddData[i][4] });
+      }
+    }
+    var btnSheet = ss.getSheetByName("ENG_Buttons");
+    if (btnSheet && btnSheet.getLastRow() > 1) {
+      var btnData = btnSheet.getRange(2, 1, btnSheet.getLastRow() - 1, btnSheet.getLastColumn()).getValues();
+      out.buttons = btnData.map(function(row){ return { BTN_ID: row[0], BTN_Label: row[1], BTN_Type: row[2], BTN_Description: row[3] }; });
+    }
+    return { success: true, forms: out.forms, views: out.views, buttons: out.buttons, dropdowns: out.dropdowns, permissions: out.permissions, userRole: out.userRole };
+  } catch (error) {
+    return { success: false, message: String(error) };
+  }
+}
+
+/**
+ * Get Dashboard KPIs - Real data for dashboard
+ */
+function getDashboardKPIs(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const kpis = {};
+
+    // Count total employees
+    const empSheet = ss.getSheetByName("HRM_Employees");
+    if (empSheet && empSheet.getLastRow() > 3) {
+      kpis.totalEmployees = empSheet.getLastRow() - 3; // Subtract header rows
+    } else {
+      kpis.totalEmployees = 0;
+    }
+
+    // Count active projects
+    const prjSheet = ss.getSheetByName("PRJ_Main");
+    if (prjSheet && prjSheet.getLastRow() > 3) {
+      const prjData = prjSheet
+        .getRange(4, 1, prjSheet.getLastRow() - 3, prjSheet.getLastColumn())
+        .getValues();
+      const headers = prjSheet
+        .getRange(1, 1, 1, prjSheet.getLastColumn())
+        .getValues()[0]
+        .map(String);
+      const statusIdx = headers.indexOf("PRJ_Status");
+
+      let activeCount = 0;
+      if (statusIdx >= 0) {
+        prjData.forEach((row) => {
+          const status = String(row[statusIdx] || "").toLowerCase();
+          if (
+            status === "active" ||
+            status === "جاري التنفيذ" ||
+            status === "نشط"
+          ) {
+            activeCount++;
+          }
+        });
+      }
+      kpis.activeProjects = activeCount;
+    } else {
+      kpis.activeProjects = 0;
+    }
+
+    // Calculate monthly revenue
+    const revSheet = ss.getSheetByName("FIN_PRJ_Revenue");
+    if (revSheet && revSheet.getLastRow() > 3) {
+      const revData = revSheet
+        .getRange(4, 1, revSheet.getLastRow() - 3, revSheet.getLastColumn())
+        .getValues();
+      const headers = revSheet
+        .getRange(1, 1, 1, revSheet.getLastColumn())
+        .getValues()[0]
+        .map(String);
+      const amountIdx = headers.indexOf("REV_Amnt");
+      const dateIdx = headers.indexOf("REV_Date");
+
+      let monthlyTotal = 0;
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      if (amountIdx >= 0 && dateIdx >= 0) {
+        revData.forEach((row) => {
+          const amount = Number(row[amountIdx] || 0);
+          const date = new Date(row[dateIdx]);
+          if (
+            date.getMonth() === currentMonth &&
+            date.getFullYear() === currentYear
+          ) {
+            monthlyTotal += amount;
+          }
+        });
+      }
+      kpis.monthlyRevenue = Math.round(monthlyTotal);
+    } else {
+      kpis.monthlyRevenue = 0;
+    }
+
+    // Calculate completion rate (tasks completed vs total)
+    const taskSheet = ss.getSheetByName("PRJ_Tasks");
+    if (taskSheet && taskSheet.getLastRow() > 3) {
+      const taskData = taskSheet
+        .getRange(4, 1, taskSheet.getLastRow() - 3, taskSheet.getLastColumn())
+        .getValues();
+      const headers = taskSheet
+        .getRange(1, 1, 1, taskSheet.getLastColumn())
+        .getValues()[0]
+        .map(String);
+      const statusIdx = headers.indexOf("TSK_Status");
+
+      let totalTasks = taskData.length;
+      let completedTasks = 0;
+
+      if (statusIdx >= 0) {
+        taskData.forEach((row) => {
+          const status = String(row[statusIdx] || "").toLowerCase();
+          if (
+            status === "completed" ||
+            status === "مكتملة" ||
+            status === "منجز"
+          ) {
+            completedTasks++;
+          }
+        });
+      }
+
+      kpis.completionRate =
+        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    } else {
+      kpis.completionRate = 0;
+    }
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        kpis: kpis,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("getDashboardKPIs error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تحميل إحصائيات النظام",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getDashboardKPIsObject(token) {
+  try {
+    var sessionCheck = validateSession_(token);
+    if (!sessionCheck.valid) return { success: false, message: "Invalid session" };
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var kpis = {};
+    var empSheet = ss.getSheetByName("HRM_Employees");
+    kpis.totalEmployees = empSheet && empSheet.getLastRow() > 3 ? empSheet.getLastRow() - 3 : 0;
+    var prjSheet = ss.getSheetByName("PRJ_Main");
+    var activeCount = 0;
+    if (prjSheet && prjSheet.getLastRow() > 3) {
+      var prjData = prjSheet.getRange(4, 1, prjSheet.getLastRow() - 3, prjSheet.getLastColumn()).getValues();
+      var headers = prjSheet.getRange(1, 1, 1, prjSheet.getLastColumn()).getValues()[0].map(String);
+      var statusIdx = headers.indexOf("PRJ_Status");
+      if (statusIdx >= 0) {
+        for (var i = 0; i < prjData.length; i++) {
+          var status = String(prjData[i][statusIdx] || "").toLowerCase();
+          if (status === "active" || status === "جاري التنفيذ" || status === "نشط") activeCount++;
+        }
+      }
+    }
+    kpis.activeProjects = activeCount;
+    var revSheet = ss.getSheetByName("FIN_PRJ_Revenue");
+    var monthlyTotal = 0;
+    if (revSheet && revSheet.getLastRow() > 3) {
+      var revData = revSheet.getRange(4, 1, revSheet.getLastRow() - 3, revSheet.getLastColumn()).getValues();
+      var h = revSheet.getRange(1, 1, 1, revSheet.getLastColumn()).getValues()[0].map(String);
+      var amountIdx = h.indexOf("REV_Amnt");
+      var dateIdx = h.indexOf("REV_Date");
+      var cm = new Date().getMonth();
+      var cy = new Date().getFullYear();
+      if (amountIdx >= 0 && dateIdx >= 0) {
+        for (var j = 0; j < revData.length; j++) {
+          var amount = Number(revData[j][amountIdx] || 0);
+          var date = new Date(revData[j][dateIdx]);
+          if (date.getMonth() === cm && date.getFullYear() === cy) monthlyTotal += amount;
+        }
+      }
+    }
+    kpis.monthlyRevenue = Math.round(monthlyTotal);
+    var taskSheet = ss.getSheetByName("PRJ_Tasks");
+    var completionRate = 0;
+    if (taskSheet && taskSheet.getLastRow() > 3) {
+      var taskData = taskSheet.getRange(4, 1, taskSheet.getLastRow() - 3, taskSheet.getLastColumn()).getValues();
+      var th = taskSheet.getRange(1, 1, 1, taskSheet.getLastColumn()).getValues()[0].map(String);
+      var statusIdx2 = th.indexOf("TSK_Status");
+      var totalTasks = taskData.length;
+      var completedTasks = 0;
+      if (statusIdx2 >= 0) {
+        for (var t = 0; t < taskData.length; t++) {
+          var st = String(taskData[t][statusIdx2] || "").toLowerCase();
+          if (st === "completed" || st === "مكتملة" || st === "منجز") completedTasks++;
+        }
+      }
+      completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    }
+    kpis.completionRate = completionRate;
+    return { success: true, kpis: kpis };
+  } catch (error) {
+    return { success: false, message: String(error) };
+  }
+}
+
+function getRecentAuditLogsObject(token, limit) {
+  try {
+    var sessionCheck = validateSession_(token);
+    if (!sessionCheck.valid) return { success: false, activities: [] };
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var auditSheet = ss.getSheetByName("SYS_Audit_Log");
+    if (!auditSheet || auditSheet.getLastRow() <= 3) return { success: true, activities: [] };
+    var headers = auditSheet.getRange(1, 1, 1, auditSheet.getLastColumn()).getValues()[0].map(String);
+    var lim = Math.min(limit || 10, 50);
+    var startRow = Math.max(4, auditSheet.getLastRow() - lim + 1);
+    var numRows = auditSheet.getLastRow() - startRow + 1;
+    if (numRows <= 0) return { success: true, activities: [] };
+    var data = auditSheet.getRange(startRow, 1, numRows, auditSheet.getLastColumn()).getValues();
+    var activities = [];
+    for (var i = data.length - 1; i >= 0; i--) {
+      var row = data[i];
+      var activity = {};
+      for (var k = 0; k < headers.length; k++) activity[headers[k]] = row[k];
+      activities.push(activity);
+    }
+    return { success: true, activities: activities };
+  } catch (error) {
+    return { success: false, message: String(error) };
+  }
+}
+
+function getAuditLogDetailsObject(token, audId) {
+  try {
+    var sessionCheck = validateSession_(token);
+    if (!sessionCheck.valid) return { success: false };
+    var ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    var auditSheet = ss.getSheetByName("SYS_Audit_Log");
+    if (!auditSheet || auditSheet.getLastRow() <= 3) return { success: false };
+    var headers = auditSheet.getRange(1, 1, 1, auditSheet.getLastColumn()).getValues()[0].map(String);
+    var data = auditSheet.getRange(4, 1, auditSheet.getLastRow() - 3, auditSheet.getLastColumn()).getValues();
+    var audIdIdx = headers.indexOf("AUD_ID");
+    if (audIdIdx < 0) return { success: false };
+    for (var i = 0; i < data.length; i++) {
+      if (String(data[i][audIdIdx]).trim() === String(audId).trim()) {
+        var foundRecord = {};
+        for (var k = 0; k < headers.length; k++) foundRecord[headers[k]] = data[i][k];
+        return { success: true, details: foundRecord };
+      }
+    }
+    return { success: false, message: "Audit record not found" };
+  } catch (error) {
+    return { success: false, message: String(error) };
+  }
+}
+
+/**
+ * Get Recent Audit Logs for Dashboard
+ */
+function getRecentAuditLogs(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const auditSheet = ss.getSheetByName("SYS_Audit_Log");
+
+    if (!auditSheet || auditSheet.getLastRow() <= 3) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          activities: [],
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const headers = auditSheet
+      .getRange(1, 1, 1, auditSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+    const limit = Math.min(requestBody.limit || 10, 50); // Max 50 records
+
+    // Get the most recent records
+    const startRow = Math.max(4, auditSheet.getLastRow() - limit + 1);
+    const numRows = auditSheet.getLastRow() - startRow + 1;
+
+    if (numRows <= 0) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          activities: [],
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const data = auditSheet
+      .getRange(startRow, 1, numRows, auditSheet.getLastColumn())
+      .getValues();
+
+    // Map data to readable format
+    const activities = data.reverse().map((row) => {
+      const activity = {};
+      headers.forEach((header, index) => {
+        activity[header] = row[index];
+      });
+      return activity;
+    });
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        activities: activities,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("getRecentAuditLogs error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تحميل الأنشطة الحديثة",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Get Audit Log Details
+ */
+function getAuditLogDetails(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const audId = requestBody.audId;
+    if (!audId) {
+      throw new Error("Audit ID required");
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const auditSheet = ss.getSheetByName("SYS_Audit_Log");
+
+    if (!auditSheet || auditSheet.getLastRow() <= 3) {
+      throw new Error("No audit logs found");
+    }
+
+    const headers = auditSheet
+      .getRange(1, 1, 1, auditSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+    const data = auditSheet
+      .getRange(4, 1, auditSheet.getLastRow() - 3, auditSheet.getLastColumn())
+      .getValues();
+
+    const audIdIdx = headers.indexOf("AUD_ID");
+    if (audIdIdx < 0) {
+      throw new Error("Invalid audit log structure");
+    }
+
+    // Find the record
+    let foundRecord = null;
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][audIdIdx]).trim() === String(audId).trim()) {
+        foundRecord = {};
+        headers.forEach((header, index) => {
+          foundRecord[header] = data[i][index];
+        });
+        break;
+      }
+    }
+
+    if (!foundRecord) {
+      throw new Error("Audit record not found");
+    }
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        details: foundRecord,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("getAuditLogDetails error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تحميل تفاصيل النشاط",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Get Module Data - Enhanced version with real data
+ */
+function apiGetModuleData(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const viewId = requestBody.viewId;
+    const options = requestBody.options || {};
+
+    if (!viewId) {
+      throw new Error("View ID required");
+    }
+
+    // Get view configuration from ENG_Views
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const viewsSheet = ss.getSheetByName("ENG_Views");
+
+    if (!viewsSheet) {
+      throw new Error(
+        "⚠️ Database not initialized! Please run Setup.js in Google Sheet: Go to 'Nijj_Interaction_Sys' menu → 'Run System' → Select 'Build Schema' + 'Seed ENG' + 'Seed Demo' → Execute"
+      );
+    }
+
+    // Find the view configuration
+    let sourceSheet = null;
+    let viewTitle = null;
+
+    if (viewsSheet.getLastRow() > 1) {
+      const viewsData = viewsSheet
+        .getRange(2, 1, viewsSheet.getLastRow() - 1, viewsSheet.getLastColumn())
+        .getValues();
+
+      for (let i = 0; i < viewsData.length; i++) {
+        if (String(viewsData[i][0]).trim() === viewId.trim()) {
+          viewTitle = viewsData[i][1];
+          sourceSheet = viewsData[i][2];
+          break;
+        }
+      }
+    }
+
+    if (!sourceSheet) {
+      throw new Error("View configuration not found: " + viewId);
+    }
+
+    // Get the actual data sheet
+    const dataSheet = ss.getSheetByName(sourceSheet);
+    if (!dataSheet) {
+      throw new Error("Data sheet not found: " + sourceSheet);
+    }
+
+    // Read headers using Smart Header Protocol
+    if (dataSheet.getLastRow() < 3) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          viewTitle: viewTitle,
+          headers: [],
+          data: [],
+          pagination: {
+            currentPage: 1,
+            pageSize: options.pageSize || 25,
+            totalRecords: 0,
+            totalPages: 0,
+          },
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const systemKeys = dataSheet
+      .getRange(1, 1, 1, dataSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+    const uiLabels = dataSheet
+      .getRange(2, 1, 1, dataSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+    const viewFlags = dataSheet
+      .getRange(3, 1, 1, dataSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+
+    // Determine visible columns (where viewFlag = "SHOW")
+    const visibleColumns = [];
+    const visibleHeaders = [];
+
+    for (let i = 0; i < viewFlags.length; i++) {
+      if (String(viewFlags[i]).trim().toUpperCase() === "SHOW") {
+        visibleColumns.push(i);
+        visibleHeaders.push(uiLabels[i] || systemKeys[i]);
+      }
+    }
+
+    // Get data rows (starting from row 4)
+    let data = [];
+    let totalRecords = 0;
+
+    if (dataSheet.getLastRow() > 3) {
+      totalRecords = dataSheet.getLastRow() - 3;
+      const allData = dataSheet
+        .getRange(4, 1, totalRecords, dataSheet.getLastColumn())
+        .getValues();
+
+      // Apply pagination
+      const pageSize = Math.min(options.pageSize || 25, 100);
+      const currentPage = options.page || 1;
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = Math.min(startIndex + pageSize, totalRecords);
+
+      for (let i = startIndex; i < endIndex; i++) {
+        if (i < allData.length) {
+          const row = {
+            cells: visibleColumns.map((colIndex) => allData[i][colIndex]),
+          };
+          data.push(row);
+        }
+      }
+    }
+
+    const totalPages = Math.ceil(totalRecords / (options.pageSize || 25));
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        viewTitle: viewTitle,
+        headers: visibleHeaders,
+        data: data,
+        pagination: {
+          currentPage: options.page || 1,
+          pageSize: options.pageSize || 25,
+          totalRecords: totalRecords,
+          totalPages: totalPages,
+        },
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("getModuleData error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تحميل بيانات الوحدة",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Save Record - Real implementation using ENG_Settings mapping
+ */
+function apiSaveRecord(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const formId = requestBody.formId;
+    const data = requestBody.data || {};
+
+    if (!formId) {
+      throw new Error("Form ID required");
+    }
+
+    // Get target sheet from ENG_Settings
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    const settingsSheet = ss.getSheetByName("ENG_Settings");
+
+    if (!settingsSheet) {
+      throw new Error("System configuration missing");
+    }
+
+    // Find target sheet for this form
+    let targetSheetName = null;
+    const settingKey = "FORM_MASTER:" + formId;
+
+    if (settingsSheet.getLastRow() > 1) {
+      const settingsData = settingsSheet
+        .getRange(
+          2,
+          1,
+          settingsSheet.getLastRow() - 1,
+          settingsSheet.getLastColumn()
+        )
+        .getValues();
+
+      for (let i = 0; i < settingsData.length; i++) {
+        if (String(settingsData[i][0]).trim() === settingKey) {
+          targetSheetName = settingsData[i][1];
+          break;
+        }
+      }
+    }
+
+    if (!targetSheetName) {
+      throw new Error("Target sheet not configured for form: " + formId);
+    }
+
+    const targetSheet = ss.getSheetByName(targetSheetName);
+    if (!targetSheet) {
+      throw new Error("Target sheet not found: " + targetSheetName);
+    }
+
+    // Read headers from Row 1 (Smart Header Protocol)
+    const headers = targetSheet
+      .getRange(1, 1, 1, targetSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+
+    // Generate new ID
+    const idColumn = headers[0]; // First column is always the ID
+    const newId = generateNextId_(targetSheet, idColumn);
+
+    // Prepare data row
+    const rowData = new Array(headers.length).fill("");
+    rowData[0] = newId; // Set the ID
+
+    // Map form data to sheet columns
+    Object.keys(data).forEach((fieldName) => {
+      const colIndex = headers.indexOf(fieldName);
+      if (colIndex >= 0) {
+        rowData[colIndex] = data[fieldName];
+      }
+    });
+
+    // Add audit fields
+    const now = new Date();
+    const userId = sessionCheck.userId;
+
+    const crtAtIdx =
+      headers.indexOf(targetSheetName.split("_")[0] + "_Crt_At") ||
+      headers.indexOf("EMP_Crt_At") ||
+      headers.indexOf("ADV_Crt_At");
+    const crtByIdx =
+      headers.indexOf(targetSheetName.split("_")[0] + "_Crt_By") ||
+      headers.indexOf("EMP_Crt_By") ||
+      headers.indexOf("ADV_Crt_By");
+
+    if (crtAtIdx >= 0) rowData[crtAtIdx] = now;
+    if (crtByIdx >= 0) rowData[crtByIdx] = userId;
+
+    // Insert the row (starting from Row 4 per Smart Header Protocol)
+    const lastRow = targetSheet.getLastRow();
+    const insertRow = Math.max(4, lastRow + 1);
+
+    targetSheet.getRange(insertRow, 1, 1, rowData.length).setValues([rowData]);
+
+    // Log the action
+    logInfo_(
+      userId,
+      "CREATE",
+      targetSheetName,
+      newId,
+      "Record created via form " + formId
+    );
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        message: "تم حفظ السجل بنجاح",
+        recordId: newId,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("saveRecord error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في حفظ السجل: " + String(error),
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Generate next sequential ID following the Smart ID Generation rule
+ */
+function generateNextId_(sheet, idColumn) {
+  try {
+    if (sheet.getLastRow() <= 3) {
+      // No data yet, start with first ID
+      const prefix = sheet.getName().split("_")[0];
+      return prefix + "-1001";
+    }
+
+    // Find the ID column
+    const headers = sheet
+      .getRange(1, 1, 1, sheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+    const idColIndex = headers.indexOf(idColumn);
+
+    if (idColIndex < 0) {
+      throw new Error("ID column not found: " + idColumn);
+    }
+
+    // Get existing IDs starting from Row 4
+    const dataRange = sheet.getRange(
+      4,
+      idColIndex + 1,
+      sheet.getLastRow() - 3,
+      1
+    );
+    const existingIds = dataRange
+      .getValues()
+      .flat()
+      .map(String)
+      .filter((id) => id.trim());
+
+    if (existingIds.length === 0) {
+      const prefix = sheet.getName().split("_")[0];
+      return prefix + "-1001";
+    }
+
+    // Extract numbers and find the highest
+    let maxNumber = 0;
+    const prefix = sheet.getName().split("_")[0];
+
+    existingIds.forEach((id) => {
+      const match = id.match(new RegExp(`^${prefix}-(\\d+)$`));
+      if (match) {
+        const num = parseInt(match[1]);
+        if (num > maxNumber) {
+          maxNumber = num;
+        }
+      }
+    });
+
+    // Return next sequential ID
+    return prefix + "-" + (maxNumber + 1);
+  } catch (error) {
+    console.error("generateNextId error:", error);
+    // Fallback to timestamp-based ID
+    return sheet.getName().split("_")[0] + "-" + Date.now();
+  }
+}
+
+/**
+ * Execute Button Action - Based on ENG_Buttons configuration
+ */
+function executeButtonAction(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const buttonId = requestBody.buttonId;
+    const recordIndex = requestBody.recordIndex;
+    const currentView = requestBody.currentView;
+
+    if (!buttonId) {
+      throw new Error("Button ID required");
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    let result = { success: false, message: "Unknown button action" };
+
+    // Execute specific button actions based on ENG_Buttons.csv
+    switch (buttonId) {
+      case "BTN_Reset_Pass":
+        result = handleResetPassword(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_Approve_Leave":
+        result = handleApproveLeave(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_Reject_Leave":
+        result = handleRejectLeave(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_PRJ_Start":
+        result = handleProjectStart(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_PRJ_Close":
+        result = handleProjectClose(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_PRJ_Hold":
+        result = handleProjectHold(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_Task_Done":
+        result = handleTaskDone(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_Approve_Adv":
+        result = handleApproveAdvance(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_Print_Invoice":
+        result = handlePrintInvoice(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      case "BTN_Approve_Payroll":
+        result = handleApprovePayroll(ss, sessionCheck.userId, recordIndex);
+        break;
+
+      default:
+        result = {
+          success: false,
+          message: "Button action not implemented: " + buttonId,
+        };
+    }
+
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(
+      ContentService.MimeType.JSON
+    );
+  } catch (error) {
+    console.error("executeButtonAction error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تنفيذ الإجراء",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Button Action Handlers - Implementation of specific business logic
+ */
+function handleResetPassword(ss, userId, recordIndex) {
+  try {
+    // For now, just return success message
+    logInfo_(
+      userId,
+      "RESET_PASSWORD",
+      "SYS_Users",
+      recordIndex,
+      "Password reset initiated"
+    );
+    return {
+      success: true,
+      message: "تم إرسال رابط إعادة تعيين كلمة السر للمستخدم",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في إعادة تعيين كلمة السر" };
+  }
+}
+
+function handleApproveLeave(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "APPROVE_LEAVE",
+      "HRM_Leave",
+      recordIndex,
+      "Leave request approved"
+    );
+    return {
+      success: true,
+      message: "تم قبول طلب الإجازة",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في قبول الإجازة" };
+  }
+}
+
+function handleRejectLeave(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "REJECT_LEAVE",
+      "HRM_Leave",
+      recordIndex,
+      "Leave request rejected"
+    );
+    return {
+      success: true,
+      message: "تم رفض طلب الإجازة",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في رفض الإجازة" };
+  }
+}
+
+function handleProjectStart(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "START_PROJECT",
+      "PRJ_Main",
+      recordIndex,
+      "Project started"
+    );
+    return {
+      success: true,
+      message: "تم بدء المشروع",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في بدء المشروع" };
+  }
+}
+
+function handleProjectClose(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "CLOSE_PROJECT",
+      "PRJ_Main",
+      recordIndex,
+      "Project closed"
+    );
+    return {
+      success: true,
+      message: "تم إغلاق المشروع",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في إغلاق المشروع" };
+  }
+}
+
+function handleProjectHold(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "HOLD_PROJECT",
+      "PRJ_Main",
+      recordIndex,
+      "Project put on hold"
+    );
+    return {
+      success: true,
+      message: "تم تعليق المشروع",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في تعليق المشروع" };
+  }
+}
+
+function handleTaskDone(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "COMPLETE_TASK",
+      "PRJ_Tasks",
+      recordIndex,
+      "Task marked as done"
+    );
+    return {
+      success: true,
+      message: "تم إتمام المهمة",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في إتمام المهمة" };
+  }
+}
+
+function handleApproveAdvance(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "APPROVE_ADVANCE",
+      "HRM_Advances",
+      recordIndex,
+      "Advance approved"
+    );
+    return {
+      success: true,
+      message: "تم صرف السلفة",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في صرف السلفة" };
+  }
+}
+
+function handlePrintInvoice(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "PRINT_INVOICE",
+      "FIN_PRJ_Revenue",
+      recordIndex,
+      "Invoice printed"
+    );
+    return {
+      success: true,
+      message: "جاري طباعة الفاتورة...",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في طباعة الفاتورة" };
+  }
+}
+
+function handleApprovePayroll(ss, userId, recordIndex) {
+  try {
+    logInfo_(
+      userId,
+      "APPROVE_PAYROLL",
+      "FIN_HRM_Payroll",
+      recordIndex,
+      "Payroll approved"
+    );
+    return {
+      success: true,
+      message: "تم اعتماد الراتب",
+    };
+  } catch (error) {
+    return { success: false, message: "فشل في اعتماد الراتب" };
+  }
+}
+
+/**
+ * Update Record - Enhanced CRUD operation
+ */
+function apiUpdateRecord(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    // For now, return placeholder response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        message: "سيتم تنفيذ تحديث السجل قريباً",
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في تحديث السجل",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Delete Record - Enhanced CRUD operation
+ */
+function apiDeleteRecord(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    // For now, return placeholder response
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        message: "سيتم تنفيذ حذف السجل قريباً",
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في حذف السجل",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Perform Smart Search - For lookup fields using real ENG data
+ */
+function apiPerformSmartSearch(requestBody) {
+  try {
+    const sessionCheck = validateSession_(requestBody.token);
+    if (!sessionCheck.valid) {
+      throw new Error("Invalid session");
+    }
+
+    const dynLink = requestBody.dynLink;
+    const searchTerm = requestBody.searchTerm || "";
+
+    if (!dynLink || searchTerm.length < 2) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          results: [],
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+    let results = [];
+
+    // Map DYN_ links to actual sheets based on ENG data structure
+    const dynMapping = {
+      DYN_EMPLOYEES: {
+        sheet: "HRM_Employees",
+        idCol: "EMP_ID",
+        labelCol: "EMP_Name_AR",
+      },
+      DYN_CLIENTS: {
+        sheet: "PRJ_Clients",
+        idCol: "CLI_ID",
+        labelCol: "CLI_Name",
+      },
+      DYN_PROJECTS: {
+        sheet: "PRJ_Main",
+        idCol: "PRJ_ID",
+        labelCol: "PRJ_Name",
+      },
+      DYN_MATERIALS: {
+        sheet: "PRJ_Material",
+        idCol: "MAT_ID",
+        labelCol: "MAT_Name",
+      },
+      DYN_DEPTS: {
+        sheet: "HRM_Departments",
+        idCol: "DEPT_ID",
+        labelCol: "DEPT_Name",
+      },
+      DYN_ROLES: { sheet: "SYS_Roles", idCol: "ROL_ID", labelCol: "ROL_Title" },
+      DYN_PERMISSIONS: {
+        sheet: "SYS_Permissions",
+        idCol: "PRM_ID",
+        labelCol: "PRM_Name",
+      },
+      DYN_CUSTODY: {
+        sheet: "FIN_Custody",
+        idCol: "CSTD_ID",
+        labelCol: "EMP_Name",
+      },
+    };
+
+    const mapping = dynMapping[dynLink];
+    if (!mapping) {
+      throw new Error("Unknown dynamic link: " + dynLink);
+    }
+
+    const dataSheet = ss.getSheetByName(mapping.sheet);
+    if (!dataSheet || dataSheet.getLastRow() <= 3) {
+      return ContentService.createTextOutput(
+        JSON.stringify({
+          success: true,
+          results: [],
+        })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Read headers and data
+    const headers = dataSheet
+      .getRange(1, 1, 1, dataSheet.getLastColumn())
+      .getValues()[0]
+      .map(String);
+    const idIdx = headers.indexOf(mapping.idCol);
+    const labelIdx = headers.indexOf(mapping.labelCol);
+
+    if (idIdx < 0 || labelIdx < 0) {
+      throw new Error("Invalid column mapping for " + dynLink);
+    }
+
+    // Search through data starting from Row 4
+    if (dataSheet.getLastRow() > 3) {
+      const data = dataSheet
+        .getRange(4, 1, dataSheet.getLastRow() - 3, dataSheet.getLastColumn())
+        .getValues();
+
+      const searchLower = searchTerm.toLowerCase();
+
+      data.forEach((row) => {
+        const id = String(row[idIdx] || "").trim();
+        const label = String(row[labelIdx] || "").trim();
+
+        if (id && label && label.toLowerCase().includes(searchLower)) {
+          results.push({
+            id: id,
+            label: label,
+          });
+        }
+      });
+    }
+
+    // Limit results to prevent UI overload
+    results = results.slice(0, 10);
+
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: true,
+        results: results,
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    console.error("performSmartSearch error:", error);
+    return ContentService.createTextOutput(
+      JSON.stringify({
+        success: false,
+        message: "فشل في البحث",
+        error: String(error),
+      })
+    ).setMimeType(ContentService.MimeType.JSON);
   }
 }

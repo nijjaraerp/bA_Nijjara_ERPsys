@@ -1,0 +1,17 @@
+BTN_ID,BTN_Label,BTN_Type,BTN_Description
+BTN_Reset_Pass,إعادة تعيين كلمة السر,ROW_ACTION,Sends reset email
+BTN_Bulk_Activate,تفعيل المحدد,BULK_ACTION,Activates selected users
+BTN_Bulk_Deactivate,تعطيل المحدد,BULK_ACTION,Deactivates selected users
+BTN_Approve_Leave,قبول الإجازة,ROW_ACTION,Approves request
+BTN_Reject_Leave,رفض الإجازة,ROW_ACTION,Rejects request
+BTN_PRJ_Start,بدء المشروع,FORM_ACTION,Changes status to Active
+BTN_PRJ_Close,إغلاق المشروع,FORM_ACTION,Changes status to Completed
+BTN_Task_Done,إتمام المهمة,ROW_ACTION,Marks task as Done
+BTN_PRJ_Hold,تعليق العمل,ROW_ACTION,Sets project status to On Hold
+BTN_Approve_Adv,صرف السلفة,ROW_ACTION,Approves advance request
+BTN_Reject_Adv,رفض السلفة,ROW_ACTION,Rejects advance request
+BTN_Kill_Session,إنهاء الجلسة,ROW_ACTION,Force logout user session
+BTN_Download_Doc,تحميل الملف,ROW_ACTION,Download attachment file
+BTN_Print_Invoice,طباعة الفاتورة,ROW_ACTION,Print revenue invoice
+BTN_Approve_Payroll,اعتماد الراتب,ROW_ACTION,Approve payroll record
+BTN_Print_Payroll,طباعة كشف الراتب,ROW_ACTION,Print salary slip

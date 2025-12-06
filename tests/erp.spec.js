@@ -63,79 +63,36 @@ async function login(page, username, password) {
   await test.step("Navigate and login", async () => {
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
-    let target = page;
-    for (const f of page.frames()) {
-      if (await f.$("#login-box")) {
-        target = f;
-        break;
-      }
-    }
-    if (target === page) {
-      const candidates = [
-        page.locator('a:has-text("Open")'),
-        page.locator('a:has-text("Preview")'),
-        page.locator('a:has-text("عرض")'),
-        page.locator('a:has-text("فتح")'),
-      ];
-      for (const l of candidates) {
-        if (await l.count()) {
-          await l.first().click();
-          break;
-        }
-      }
-      await page.waitForLoadState("networkidle");
-      for (const f of page.frames()) {
-        if (await f.$("#login-box")) {
-          target = f;
-          break;
-        }
-      }
-    }
-    const userInput = target.locator('#login-box input[type="text"]');
-    const passInput = target.locator('#login-box input[type="password"]');
-    const submitBtn = target.locator("#login-button");
+    const userInput = page.locator('#username');
+    const passInput = page.locator('#password');
+    const submitBtn = page.locator('#loginBtn');
     await userInput.waitFor({ state: "visible", timeout: 45000 });
     await passInput.waitFor({ state: "visible", timeout: 45000 });
     await userInput.fill(username);
     await passInput.fill(password);
     await submitBtn.click();
-    await target
-      .locator("#nijjara-os")
-      .waitFor({ state: "visible", timeout: 45000 });
+    await page.locator('#appContainer').waitFor({ state: "visible", timeout: 45000 });
   });
 }
 
 test("ERP - login and load HRM Employees grid", async ({ page }) => {
   const telemetry = await captureBrowserTelemetry(page, "hrm-employees");
-  const username = process.env.ERP_USER || "mkhoraiby";
-  const password = process.env.ERP_PASS || "123456";
+  const username = process.env.ERP_USER || "";
+  const password = process.env.ERP_PASS || "";
 
   try {
     await login(page, username, password);
 
     await test.step("Open HRM module and validate grid", async () => {
-      let target = page;
-      for (const f of page.frames()) {
-        if (await f.$("#nijjara-os")) {
-          target = f;
-          break;
-        }
-      }
-      const hrmApp = target.locator("#app-hrm");
-      await expect(hrmApp).toBeVisible();
-      await hrmApp.click();
-
-      const windowTitle = target.locator(".window-header h3");
-      await expect(windowTitle).toContainText("وحدة الموارد البشرية");
-
-      const table = target.locator(".module-grid table");
+      const hrmNav = page.locator('.nav-link[data-view="hrm"]');
+      await hrmNav.click();
+      const pageTitle = page.locator('#hrmView .page-title');
+      await expect(pageTitle).toHaveText(/الموارد البشرية/);
+      const table = page.locator('#hrmView .data-table');
       await expect(table).toBeVisible();
-      const headers = table.locator("thead th");
-      await expect(headers).toHaveCountGreaterThan(3);
-      await page.screenshot({
-        path: path.join("artifacts", "hrm-grid.png"),
-        fullPage: true,
-      });
+      const headers = table.locator('thead th');
+      await expect(await headers.count()).toBeGreaterThan(3);
+      await page.screenshot({ path: path.join('artifacts', 'hrm-grid.png'), fullPage: true });
     });
   } catch (e) {
     await page.screenshot({

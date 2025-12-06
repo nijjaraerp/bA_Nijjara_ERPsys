@@ -671,7 +671,7 @@ function runFullSystemSetup() {
   // 4. Delete Temp Sheet
   ss.deleteSheet(tempSheet);
 
-  seedFullEngineConfiguration();
+  seedMasterConfiguration();
 
   // 5. Seed Data
   seedData_();
@@ -1152,6 +1152,32 @@ function seedMasterConfiguration() {
     ["FORM_MASTER:FORM_FIN_AddPRJ_Revenue", "FIN_PRJ_Revenue", "Add Revenue"],
     ["FORM_MASTER:FORM_FIN_AddCustody", "FIN_Custody", "Issue Custody"],
     ["FORM_MASTER:FORM_FIN_AddHRM_Payroll", "FIN_HRM_Payroll", "Payroll"],
+    // View Forms (for completeness, though they don't write data)
+    ["FORM_MASTER:FORM_SYS_ViewUser", "SYS_Users", "View User"],
+    ["FORM_MASTER:FORM_SYS_ViewRole", "SYS_Roles", "View Role"],
+    ["FORM_MASTER:FORM_SYS_ViewPermission", "SYS_Permissions", "View Permission"],
+    ["FORM_MASTER:FORM_SYS_ViewRolePermission", "SYS_Role_Permissions", "View Role Permission"],
+    ["FORM_MASTER:FORM_SYS_ViewAuditLog", "SYS_Audit_Log", "View Audit Log"],
+    ["FORM_MASTER:FORM_SYS_ViewSession", "SYS_Sessions", "View Session"],
+    ["FORM_MASTER:FORM_SYS_ViewDocument", "SYS_Documents", "View Document"],
+    ["FORM_MASTER:FORM_SYS_ViewPubHoliday", "SYS_PubHolidays", "View Pub Holiday"],
+    ["FORM_MASTER:FORM_HRM_ViewEmployee", "HRM_Employees", "View Employee"],
+    ["FORM_MASTER:FORM_HRM_ViewDepartment", "HRM_Departments", "View Department"],
+    ["FORM_MASTER:FORM_HRM_ViewAttendance", "HRM_Attendance", "View Attendance"],
+    ["FORM_MASTER:FORM_HRM_ViewLeave", "HRM_Leave", "View Leave"],
+    ["FORM_MASTER:FORM_HRM_ViewAdvance", "HRM_Advances", "View Advance"],
+    ["FORM_MASTER:FORM_HRM_ViewOverTime", "HRM_OverTime", "View OverTime"],
+    ["FORM_MASTER:FORM_HRM_ViewDeduction", "HRM_Deductions", "View Deduction"],
+    ["FORM_MASTER:FORM_PRJ_ViewMain", "PRJ_Main", "View Project"],
+    ["FORM_MASTER:FORM_PRJ_ViewClient", "PRJ_Clients", "View Client"],
+    ["FORM_MASTER:FORM_PRJ_ViewTask", "PRJ_Tasks", "View Task"],
+    ["FORM_MASTER:FORM_PRJ_ViewMaterial", "PRJ_Material", "View Material"],
+    ["FORM_MASTER:FORM_FIN_ViewDirectExpense", "FIN_DirectExpenses", "View Direct Expense"],
+    ["FORM_MASTER:FORM_FIN_ViewInDirectExpense_Time", "FIN_InDirectExpenses_Time", "View Indirect Exp Time"],
+    ["FORM_MASTER:FORM_FIN_ViewInDirectExpense_NoTime", "FIN_InDirectExpenses_NoTime", "View Indirect Exp NoTime"],
+    ["FORM_MASTER:FORM_FIN_ViewPRJ_Revenue", "FIN_PRJ_Revenue", "View PRJ Revenue"],
+    ["FORM_MASTER:FORM_FIN_ViewCustody", "FIN_Custody", "View Custody"],
+    ["FORM_MASTER:FORM_FIN_ViewHRM_Payroll", "FIN_HRM_Payroll", "View HRM Payroll"],
   ];
   setSheet.getRange(2, 1, settings.length, 3).setValues(settings);
 
@@ -1259,7 +1285,37 @@ function seedMasterConfiguration() {
       "Related_View",
       "READ_ONLY",
       "SYS_Role_Permissions",
-    ]
+    ],
+    // Add Permission
+    ["FORM_SYS_AddPermission", "Permission Info", "PRM_Name", "Text", "EDITABLE", ""],
+    ["FORM_SYS_AddPermission", "Permission Info", "PRM_Notes", "Text", "EDITABLE", ""],
+    ["FORM_SYS_AddPermission", "Permission Info", "PRM_Catg", "Dropdown", "EDITABLE", "DD_Permission_Categories"],
+    // Add Role Permission
+    ["FORM_SYS_AddRolePermission", "Role", "ROL_ID", "Dropdown", "EDITABLE", "DYN_ROLES"],
+    ["FORM_SYS_AddRolePermission", "Permission", "PRM_ID", "Dropdown", "EDITABLE", "DYN_PERMISSIONS"],
+    ["FORM_SYS_AddRolePermission", "Settings", "SRP_Is_Allowed", "Dropdown", "EDITABLE", "DD_YesNo"],
+    // View Permission
+    ["FORM_SYS_ViewPermission", "Info", "PRM_Name", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewPermission", "Info", "PRM_Notes", "Text", "READ_ONLY", ""],
+    // View Role Permission
+    ["FORM_SYS_ViewRolePermission", "Info", "ROL_ID", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewRolePermission", "Info", "PRM_ID", "Text", "READ_ONLY", ""],
+    // View Audit Log
+    ["FORM_SYS_ViewAuditLog", "Details", "AUD_ID", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewAuditLog", "Details", "USR_Action", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewAuditLog", "Details", "ACT_Description", "Text", "READ_ONLY", ""],
+    // View Session
+    ["FORM_SYS_ViewSession", "Details", "SESS_ID", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewSession", "Details", "SESS_Status", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewSession", "Details", "SESS_Start_At", "Date", "READ_ONLY", ""],
+    // View Document
+    ["FORM_SYS_ViewDocument", "Details", "DOC_ID", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewDocument", "Details", "DOC_File_Name", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewDocument", "Details", "DOC_Drive_URL", "Text", "READ_ONLY", ""],
+    // View Pub Holiday
+    ["FORM_SYS_ViewPubHoliday", "Details", "PUBHOL_ID", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewPubHoliday", "Details", "Pub_Holiday_Name", "Text", "READ_ONLY", ""],
+    ["FORM_SYS_ViewPubHoliday", "Details", "Pub_Holiday_Date", "Date", "READ_ONLY", ""]
   );
 
   // --- HRM MODULE ---
@@ -1422,7 +1478,37 @@ function seedMasterConfiguration() {
       "Related_View",
       "READ_ONLY",
       "FIN_Custody",
-    ]
+    ],
+    // View Department
+    ["FORM_HRM_ViewDepartment", "Info", "DEPT_Name", "Text", "READ_ONLY", ""],
+    [
+      "FORM_HRM_ViewDepartment",
+      "Employees",
+      "EMP_ID",
+      "Related_View",
+      "READ_ONLY",
+      "HRM_Employees",
+    ],
+    // View Attendance
+    ["FORM_HRM_ViewAttendance", "Details", "ATT_ID", "Text", "READ_ONLY", ""],
+    ["FORM_HRM_ViewAttendance", "Details", "ATT_Date", "Date", "READ_ONLY", ""],
+    ["FORM_HRM_ViewAttendance", "Details", "ATT_Check_In", "Text", "READ_ONLY", ""],
+    // View Leave
+    ["FORM_HRM_ViewLeave", "Details", "LV_ID", "Text", "READ_ONLY", ""],
+    ["FORM_HRM_ViewLeave", "Details", "LV_Type", "Text", "READ_ONLY", ""],
+    ["FORM_HRM_ViewLeave", "Details", "LV_Start_Date", "Date", "READ_ONLY", ""],
+    // View Advance
+    ["FORM_HRM_ViewAdvance", "Details", "ADV_ID", "Text", "READ_ONLY", ""],
+    ["FORM_HRM_ViewAdvance", "Details", "ADV_Amnt", "Number", "READ_ONLY", ""],
+    ["FORM_HRM_ViewAdvance", "Details", "ADV_Status", "Text", "READ_ONLY", ""],
+    // View OverTime
+    ["FORM_HRM_ViewOverTime", "Details", "OT_ID", "Text", "READ_ONLY", ""],
+    ["FORM_HRM_ViewOverTime", "Details", "OT_Amnt", "Number", "READ_ONLY", ""],
+    ["FORM_HRM_ViewOverTime", "Details", "ATT_Date", "Date", "READ_ONLY", ""],
+    // View Deduction
+    ["FORM_HRM_ViewDeduction", "Details", "DEDCT_ID", "Text", "READ_ONLY", ""],
+    ["FORM_HRM_ViewDeduction", "Details", "DEDCT_Amnt", "Number", "READ_ONLY", ""],
+    ["FORM_HRM_ViewDeduction", "Details", "DEDCT_Date", "Date", "READ_ONLY", ""]
   );
 
   // --- PRJ MODULE ---
@@ -1532,7 +1618,15 @@ function seedMasterConfiguration() {
       "Related_View",
       "READ_ONLY",
       "PRJ_Main",
-    ]
+    ],
+    // View Task
+    ["FORM_PRJ_ViewTask", "Details", "TSK_ID", "Text", "READ_ONLY", ""],
+    ["FORM_PRJ_ViewTask", "Details", "TSK_Name", "Text", "READ_ONLY", ""],
+    ["FORM_PRJ_ViewTask", "Details", "TSK_Status", "Text", "READ_ONLY", ""],
+    // View Material
+    ["FORM_PRJ_ViewMaterial", "Details", "MAT_ID", "Text", "READ_ONLY", ""],
+    ["FORM_PRJ_ViewMaterial", "Details", "MAT_Name", "Text", "READ_ONLY", ""],
+    ["FORM_PRJ_ViewMaterial", "Details", "MAT_Catg", "Text", "READ_ONLY", ""]
   );
 
   // --- FIN MODULE ---
@@ -1683,7 +1777,26 @@ function seedMasterConfiguration() {
 
     // View Custody
     ["FORM_FIN_ViewCustody", "Details", "EMP_Name", "Text", "READ_ONLY", ""],
-    ["FORM_FIN_ViewCustody", "Details", "CSTD_Amnt", "Number", "READ_ONLY", ""]
+    ["FORM_FIN_ViewCustody", "Details", "CSTD_Amnt", "Number", "READ_ONLY", ""],
+    // View Direct Expense
+    ["FORM_FIN_ViewDirectExpense", "Details", "DiEXP_ID", "Text", "READ_ONLY", ""],
+    ["FORM_FIN_ViewDirectExpense", "Details", "DiEXP_Date", "Date", "READ_ONLY", ""],
+    ["FORM_FIN_ViewDirectExpense", "Details", "DiEXP_Total_VAT_Inc", "Number", "READ_ONLY", ""],
+    // View Indirect Expense Time
+    ["FORM_FIN_ViewInDirectExpense_Time", "Details", "InDiEXP_TM_ID", "Text", "READ_ONLY", ""],
+    ["FORM_FIN_ViewInDirectExpense_Time", "Details", "InDiEXP_Start", "Date", "READ_ONLY", ""],
+    ["FORM_FIN_ViewInDirectExpense_Time", "Details", "InDiEXP_End", "Date", "READ_ONLY", ""],
+    // View Indirect Expense NoTime
+    ["FORM_FIN_ViewInDirectExpense_NoTime", "Details", "InDiEXP_NT_ID", "Text", "READ_ONLY", ""],
+    ["FORM_FIN_ViewInDirectExpense_NoTime", "Details", "InDiEXP_NT_Catg", "Text", "READ_ONLY", ""],
+    // View PRJ Revenue
+    ["FORM_FIN_ViewPRJ_Revenue", "Details", "REV_ID", "Text", "READ_ONLY", ""],
+    ["FORM_FIN_ViewPRJ_Revenue", "Details", "REV_Date", "Date", "READ_ONLY", ""],
+    ["FORM_FIN_ViewPRJ_Revenue", "Details", "REV_Amnt", "Number", "READ_ONLY", ""],
+    // View HRM Payroll
+    ["FORM_FIN_ViewHRM_Payroll", "Details", "PAY_ID", "Text", "READ_ONLY", ""],
+    ["FORM_FIN_ViewHRM_Payroll", "Details", "PAY_Net_Pay", "Number", "READ_ONLY", ""],
+    ["FORM_FIN_ViewHRM_Payroll", "Details", "PAY_Status", "Text", "READ_ONLY", ""]
   );
 
   formSheet.getRange(2, 1, forms.length, 6).setValues(forms);
@@ -1692,18 +1805,204 @@ function seedMasterConfiguration() {
 }
 
 /**
- * Adds a custom menu to the Google Sheets UI for one‑click extraction.
- * Menu: "Nijjara ERP" → "Extract ERP Data"
+ * Adds a custom menu to the Google Sheets UI.
+ * Menu: "Nijj_Interaction_Sys" → "Run System" (opens sidebar)
+ * Also includes "Extract ERP Data" option
  */
 function onOpen() {
   try {
-    SpreadsheetApp.getUi()
-      .createMenu("Nijjara ERP")
+    var ui = SpreadsheetApp.getUi();
+    ui.createMenu("Nijj_Interaction_Sys")
+      .addItem("Run System", "showSidebar")
+      .addSeparator()
       .addItem("Extract ERP Data", "extractERPSchemaAndEngineIDs")
       .addToUi();
-    Logger.log("[Menu] Nijjara ERP menu registered.");
+    Logger.log("[Menu] Nijj_Interaction_Sys menu registered.");
   } catch (e) {
     Logger.log("[Menu-Error] " + e);
+  }
+}
+
+/**
+ * Shows the Nijjara Orchestrator sidebar with checkboxes for database management tasks
+ */
+function showSidebar() {
+  try {
+    var html = HtmlService.createHtmlOutputFromFile("Sidebar")
+      .setTitle("Nijjara Orchestrator")
+      .setWidth(350);
+    SpreadsheetApp.getUi().showSidebar(html);
+  } catch (e) {
+    // If Sidebar.html doesn't exist, create inline HTML
+    var htmlContent = '<!DOCTYPE html><html><head><base target="_top"><meta charset="UTF-8"><style>body{font-family:Cairo,sans-serif;padding:20px;direction:rtl;}h2{color:#0078f0;}label{display:block;margin:10px 0;cursor:pointer;}input[type="checkbox"]{margin-left:10px;}button{background:#0078f0;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;margin-top:20px;font-family:Cairo,sans-serif;}button:hover{background:#0056b3;}</style></head><body><h2>نظام إدارة قاعدة البيانات</h2><form id="taskForm"><label><input type="checkbox" name="tasks" value="DELETE_HRM"> حذف جميع أوراق HRM</label><label><input type="checkbox" name="tasks" value="DELETE_PRJ"> حذف جميع أوراق PRJ</label><label><input type="checkbox" name="tasks" value="DELETE_FIN"> حذف جميع أوراق FIN</label><label><input type="checkbox" name="tasks" value="WIPE_ENG"> مسح بيانات ENG (مع الحفاظ على الرؤوس)</label><label><input type="checkbox" name="tasks" value="WIPE_SYS"> مسح بيانات SYS (مع الحفاظ على الرؤوس)</label><label><input type="checkbox" name="tasks" value="BUILD_SCHEMA"> إنشاء/إعادة بناء المخطط</label><label><input type="checkbox" name="tasks" value="SEED_ENG"> زرع بيانات التكوين الرئيسية (ENG)</label><label><input type="checkbox" name="tasks" value="SEED_DEMO"> زرع بيانات تجريبية</label><button type="button" onclick="executeTasks()">تنفيذ</button></form><div id="result" style="margin-top:20px;"></div><script>function executeTasks(){var checkboxes=document.querySelectorAll(\'input[name="tasks"]:checked\');var tasks=Array.from(checkboxes).map(cb=>cb.value);if(tasks.length===0){alert("يرجى اختيار مهمة واحدة على الأقل");return;}document.getElementById("result").innerHTML="<p>جاري التنفيذ...</p>";google.script.run.withSuccessHandler(function(result){document.getElementById("result").innerHTML="<pre>"+result.log+"</pre>";if(result.success){alert("تم التنفيذ بنجاح!");}else{alert("حدث خطأ أثناء التنفيذ");}}).withFailureHandler(function(error){document.getElementById("result").innerHTML="<p style=\'color:red;\'>خطأ: "+error+"</p>";}).processSidebarQueue(tasks);}</script></body></html>';
+    var html = HtmlService.createHtmlOutput(htmlContent)
+      .setTitle("Nijjara Orchestrator")
+      .setWidth(350);
+    SpreadsheetApp.getUi().showSidebar(html);
+  }
+}
+
+/**
+ * Processes the sidebar task queue with smart sequencing
+ * Priority: DELETE Sheets > WIPE Data > SCHEMA Create > SEED Data
+ */
+function processSidebarQueue(taskList) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var logs = [];
+    var results = { success: true, log: "" };
+
+    // Smart sequencing: Reorder tasks to prevent conflicts
+    var orderedTasks = [];
+    var deleteTasks = [];
+    var wipeTasks = [];
+    var buildTasks = [];
+    var seedTasks = [];
+
+    for (var t = 0; t < taskList.length; t++) {
+      var task = String(taskList[t]).trim();
+      if (task.indexOf("DELETE_") === 0) {
+        deleteTasks.push(task);
+      } else if (task.indexOf("WIPE_") === 0) {
+        wipeTasks.push(task);
+      } else if (task === "BUILD_SCHEMA") {
+        buildTasks.push(task);
+      } else if (task.indexOf("SEED_") === 0) {
+        seedTasks.push(task);
+      }
+    }
+
+    // Combine in priority order
+    orderedTasks = deleteTasks.concat(wipeTasks).concat(buildTasks).concat(seedTasks);
+
+    // Execute tasks sequentially
+    for (var i = 0; i < orderedTasks.length; i++) {
+      var task = orderedTasks[i];
+      try {
+        if (task === "DELETE_HRM") {
+          deleteGroupSheets("HRM_");
+          logs.push("SUCCESS: Deleted all HRM sheets");
+        } else if (task === "DELETE_PRJ") {
+          deleteGroupSheets("PRJ_");
+          logs.push("SUCCESS: Deleted all PRJ sheets");
+        } else if (task === "DELETE_FIN") {
+          deleteGroupSheets("FIN_");
+          logs.push("SUCCESS: Deleted all FIN sheets");
+        } else if (task === "WIPE_ENG") {
+          wipeGroupData("ENG_");
+          logs.push("SUCCESS: Wiped ENG data (headers preserved)");
+        } else if (task === "WIPE_SYS") {
+          wipeGroupData("SYS_");
+          logs.push("SUCCESS: Wiped SYS data (headers preserved)");
+        } else if (task === "BUILD_SCHEMA") {
+          runFullSystemSetup();
+          logs.push("SUCCESS: Schema built/rebuilt");
+        } else if (task === "SEED_ENG") {
+          seedMasterConfiguration();
+          logs.push("SUCCESS: Seeded ENG configuration");
+        } else if (task === "SEED_DEMO") {
+          seedDemoData({ employees: 25, departments: 5, users: 10, projects: 12, expenses: 40 });
+          logs.push("SUCCESS: Seeded demo data");
+        } else {
+          logs.push("WARNING: Unknown task: " + task);
+        }
+      } catch (taskErr) {
+        logs.push("FAILED: " + task + " - " + String(taskErr));
+        results.success = false;
+      }
+    }
+
+    results.log = logs.join("\n");
+    return results;
+  } catch (e) {
+    return { success: false, log: "ERROR: " + String(e) };
+  }
+}
+
+/**
+ * Deletes all sheets starting with the given prefix
+ */
+function deleteGroupSheets(prefix) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = ss.getSheets();
+    var deleted = 0;
+    for (var s = 0; s < sheets.length; s++) {
+      var name = sheets[s].getName();
+      if (name.indexOf(prefix) === 0) {
+        ss.deleteSheet(sheets[s]);
+        deleted++;
+      }
+    }
+    return deleted;
+  } catch (e) {
+    throw new Error("deleteGroupSheets failed: " + String(e));
+  }
+}
+
+/**
+ * Wipes data from Row 4 onwards, preserving headers (Rows 1-3)
+ */
+function wipeGroupData(prefix) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = ss.getSheets();
+    var wiped = 0;
+    for (var s = 0; s < sheets.length; s++) {
+      var name = sheets[s].getName();
+      if (name.indexOf(prefix) === 0) {
+        var lastRow = sheets[s].getLastRow();
+        if (lastRow > 3) {
+          sheets[s].deleteRows(4, lastRow - 3);
+          wiped++;
+        }
+      }
+    }
+    return wiped;
+  } catch (e) {
+    throw new Error("wipeGroupData failed: " + String(e));
+  }
+}
+
+/**
+ * Builds schema for a group (creates sheets with headers)
+ */
+function buildGroupSchema(prefix) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    // This is handled by runFullSystemSetup() which uses ERP_SCHEMA
+    // This function is a placeholder for future group-specific schema building
+    return true;
+  } catch (e) {
+    throw new Error("buildGroupSchema failed: " + String(e));
+  }
+}
+
+/**
+ * Seeds data for a group
+ */
+function seedGroupData(prefix) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    // This is handled by seedData_() and seedDemoData()
+    // This function is a placeholder for future group-specific seeding
+    return true;
+  } catch (e) {
+    throw new Error("seedGroupData failed: " + String(e));
+  }
+}
+
+/**
+ * Generates a status report from task execution results
+ */
+function generateReport(results) {
+  try {
+    if (!results || !results.log) {
+      return "No results to report";
+    }
+    return results.log;
+  } catch (e) {
+    return "Error generating report: " + String(e);
   }
 }
 

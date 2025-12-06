@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>لوحة جانبية</title>
+    <style>
+      body { font-family: Cairo, sans-serif; margin: 0; padding: 0; }
+      .sidebar { padding: 1rem; }
+      .title { font-weight: 700; margin-bottom: 1rem; }
+      .item { margin: 0.5rem 0; }
+      .btn { display: inline-block; padding: 0.5rem 0.75rem; background: #667eea; color: #fff; border-radius: 6px; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="title">لوحة إدارة النظام</div>
+      <div class="item"><a class="btn" href="#" onclick="google.script.run.runFullSystemSetup()">بناء المخطط وتهيئة البيانات</a></div>
+      <div class="item"><a class="btn" href="#" onclick="google.script.run.seedMasterConfiguration()">تهيئة إعدادات المحرك</a></div>
+      <div class="item"><a class="btn" href="#" onclick="google.script.run.seedDemoData({employees:10,departments:5,users:5,projects:5,expenses:10})">إدخال بيانات تجريبية</a></div>
+    </div>
+  </body>
+</html>

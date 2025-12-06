@@ -1,174 +1,3812 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nijjara ERP Dashboard</title>
-  <!-- Bootstrap RTL + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary-color: #0078f0;
-      --bg-dark: #07080d;
-      --glass: rgba(25,28,48,0.8);
-      --text: #e0e0e0;
-      --border-glass: rgba(255,255,255,0.1);
-    }
-    body { 
-      background: var(--bg-dark); 
-      color: var(--text); 
-      font-family: 'Cairo', sans-serif; 
-      overflow: hidden;
-    }
-    /* Boot Screen */
-    #bootScreen {
-      position: fixed; top:0; left:0; width:100%; height:100vh;
-      background: #000; display:flex; flex-direction:column; align-items:center; justify-content:center;
-      z-index:1000; transition: opacity 1s;
-    }
-    #bootScreen.hidden { opacity:0; pointer-events:none; }
-    .boot-logo { font-size:2.5rem; color:#0078f0; margin-bottom:2rem; }
-    .boot-progress { width:300px; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; margin:1rem 0; }
-    .boot-progress-bar { height:100%; background:#0078f0; width:0%; animation: load 3s ease-out forwards; }
-    @keyframes load { to { width:100%; } }
-    /* Sidebar from Index, dark themed */
-    .sidebar {
-      position:fixed; right:0; top:0; width:280px; height:100vh;
-      background: var(--glass); backdrop-filter:blur(15px);
-      padding:1rem; box-shadow: -2px 0 10px rgba(0,0,0,0.5);
-    }
-    .sidebar .nav-link { color:var(--text); border-radius:8px; margin:2px 0; transition:all 0.3s; }
-    .sidebar .nav-link.active, .sidebar .nav-link:hover { background:var(--primary-color); }
-    /* Main Content */
-    .main-content { margin-right:280px; padding:2rem; }
-    .kpi-card {
-      background:var(--glass); backdrop-filter:blur(10px); border:1px solid var(--border-glass);
-      border-radius:15px; padding:1.5rem; text-align:center; margin-bottom:1rem;
-      box-shadow:0 4px 15px rgba(0,0,0,0.3);
-    }
-    .kpi-card h2 { color:var(--primary-color); font-size:2rem; }
-    /* Neural Dock minimal */
-    #neuralDock {
-      position:fixed; bottom:2rem; left:50%; transform:translateX(-50%);
-      display:flex; gap:1rem; background:var(--glass); padding:1rem; border-radius:20px;
-      backdrop-filter:blur(20px); border:1px solid var(--border-glass);
-    }
-    .dock-item { width:60px; height:60px; background:var(--glass); border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform 0.3s; }
-    .dock-item:hover { transform:scale(1.1); background:var(--primary-color); }
-    /* Hide views initially */
-    #moduleView, #formView { display:none; }
-  </style>
-</head>
-<body>
-  <!-- Boot Screen from Dashboard.html -->
-  <div id="bootScreen">
-    <div class="boot-logo">نظام نجارة ERP</div>
-    <div class="boot-progress"><div class="boot-progress-bar"></div></div>
-    <p>جاري التحميل...</p>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام نجارة ERP - إدارة موارد المؤسسة</title>
 
-  <!-- Sidebar from Index.html (dark themed) -->
-  <nav class="sidebar">
-    <h5 class="text-white mb-4">القوائم الرئيسية</h5>
-    <ul class="nav flex-column">
-      <li class="nav-item"><a class="nav-link active" href="#" onclick="showDashboard()"><i class="bi bi-house"></i>الرئيسية</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('SYS')"><i class="bi bi-gear"></i>النظام</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('HRM')"><i class="bi bi-people"></i>الموارد البشرية</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('PRJ')"><i class="bi bi-kanban"></i>المشاريع</a></li>
-      <li class="nav-item"><a class="nav-link" href="#" onclick="showModule('FIN')"><i class="bi bi-cash-stack"></i>المالية</a></li>
-    </ul>
-  </nav>
+    <!-- External Libraries -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+      rel="stylesheet"
+    />
 
-  <!-- Main Content from Index.html, adapted -->
-  <div class="main-content" id="mainContent">
-    <!-- Dashboard View with KPI Cards -->
-    <div id="dashboardView">
-      <h2>لوحة التحكم</h2>
-      <div class="row" id="kpiCards">
-        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-people display-4 mb-3"></i><h5>إجمالي الموظفين</h5><h2 id="totalEmployees">0</h2></div></div>
-        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-kanban display-4 mb-3"></i><h5>المشاريع النشطة</h5><h2 id="activeProjects">0</h2></div></div>
-        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-cash-stack display-4 mb-3"></i><h5>إجمالي الإيرادات</h5><h2 id="totalRevenue">0</h2></div></div>
-        <div class="col-md-3"><div class="kpi-card"><i class="bi bi-percent display-4 mb-3"></i><h5>نسبة الإنجاز</h5><h2 id="completionRate">0%</h2></div></div>
+    <style>
+      /* ===== PROFESSIONAL ERP DESIGN SYSTEM ===== */
+
+      :root {
+        /* Modern Dark Color Palette */
+        --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --primary-solid: #667eea;
+        --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --warning: linear-gradient(135deg, #fce043 0%, #fb7ba2 100%);
+        --danger: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+
+        /* Dark Theme Colors */
+        --bg-primary: #0a0e1a;
+        --bg-secondary: #1a1f35;
+        --bg-tertiary: #2a3042;
+        --surface: rgba(42, 48, 66, 0.95);
+        --surface-light: rgba(70, 80, 100, 0.95);
+        --glass: rgba(255, 255, 255, 0.1);
+        --glass-strong: rgba(255, 255, 255, 0.15);
+        --border: rgba(255, 255, 255, 0.1);
+        --text-primary: #ffffff;
+        --text-secondary: #b8c2cc;
+        --text-muted: #8892a0;
+
+        /* Advanced Shadows */
+        --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+        --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.25);
+        --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.3);
+
+        /* Advanced Animations */
+        --transition-fast: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        --transition-smooth: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        --transition-slow: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+        /* Z-Index System */
+        --z-dropdown: 1000;
+        --z-modal: 2000;
+        --z-notification: 3000;
+        --z-overlay: 4000;
+      }
+
+      /* ===== GLOBAL RESET & BASE ===== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Cairo", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        overflow-x: hidden;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* ===== ADVANCED BACKGROUND ===== */
+      .app-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(102, 126, 234, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(118, 75, 162, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(79, 172, 254, 0.08) 0%,
+            transparent 50%
+          ),
+          var(--bg-primary);
+        z-index: -1;
+      }
+
+      /* ===== PROFESSIONAL SPLASH SCREEN ===== */
+      .splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(
+          135deg,
+          var(--bg-primary) 0%,
+          var(--bg-secondary) 100%
+        );
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: var(--z-overlay);
+        transition: var(--transition-slow);
+      }
+
+      .splash-screen.fade-out {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .splash-logo {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+        margin-bottom: 2rem;
+        animation: logoGlow 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes logoGlow {
+        0% {
+          filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
+        }
+        100% {
+          filter: drop-shadow(0 0 30px rgba(102, 126, 234, 0.8));
+        }
+      }
+
+      .splash-tagline {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-bottom: 3rem;
+        text-align: center;
+      }
+
+      .splash-loader {
+        width: 60px;
+        height: 60px;
+        border: 3px solid var(--glass);
+        border-top: 3px solid var(--primary-solid);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ===== PROFESSIONAL LOGIN SCREEN ===== */
+      .login-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: var(--z-overlay);
+        transition: var(--transition-slow);
+      }
+
+      .login-container.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .login-card {
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 3rem;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: var(--shadow-xl);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .login-card::before {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: var(--primary);
+        border-radius: 24px;
+        z-index: -1;
+        opacity: 0.1;
+      }
+
+      .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .login-title {
+        font-size: 2rem;
+        font-weight: 700;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+
+      .login-subtitle {
+        color: var(--text-secondary);
+        font-size: 1rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 1rem;
+        background: var(--glass);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(10px);
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary-solid);
+        background: var(--glass-strong);
+        box-shadow: var(--shadow-glow);
+      }
+
+      .btn-login {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .btn-login:active {
+        transform: translateY(0);
+      }
+
+      /* ===== MAIN APPLICATION LAYOUT ===== */
+      .app-container {
+        display: flex;
+        min-height: 100vh;
+        opacity: 0;
+        transition: var(--transition-slow);
+      }
+
+      .app-container.active {
+        opacity: 1;
+      }
+
+      /* ===== FLOATING SIDEBAR (RTL - RIGHT SIDE) ===== */
+      .sidebar {
+        position: fixed;
+        right: 1rem;
+        top: 1rem;
+        bottom: 1rem;
+        width: 280px;
+        background: var(--surface);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        z-index: 100;
+        transition: var(--transition-smooth);
+        transform: translateX(100%);
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .sidebar-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .sidebar-logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .sidebar-nav {
+        list-style: none;
+      }
+
+      .nav-item {
+        margin-bottom: 0.5rem;
+      }
+
+      .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        border-radius: 12px;
+        transition: var(--transition-fast);
+        font-weight: 500;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background: var(--glass);
+        color: var(--text-primary);
+      }
+
+      .nav-link.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: var(--shadow-glow);
+      }
+
+      .nav-link i {
+        margin-left: 0.75rem;
+        font-size: 1.2rem;
+      }
+
+      /* ===== MAIN CONTENT AREA (RTL) ===== */
+      .main-content {
+        flex: 1;
+        margin-right: 300px;
+        margin-left: 0;
+        padding: 1rem;
+        transition: var(--transition-smooth);
+      }
+
+      .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 1.5rem 0;
+      }
+
+      .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* ===== COMMAND PALETTE ===== */
+      .command-trigger {
+        position: fixed;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        padding: 0.75rem 1.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        z-index: 200;
+        backdrop-filter: blur(20px);
+      }
+
+      .command-trigger:hover {
+        background: var(--surface-light);
+        color: var(--text-primary);
+      }
+
+      .command-palette {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 600px;
+        max-width: 90vw;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow-xl);
+        z-index: var(--z-modal);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(20px);
+      }
+
+      .command-palette.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .command-input {
+        width: 100%;
+        padding: 1.5rem;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        outline: none;
+      }
+
+      .command-results {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0.5rem 0;
+      }
+
+      .command-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .command-item:hover {
+        background: var(--glass);
+      }
+
+      .command-item i {
+        margin-left: 1rem;
+        color: var(--primary-solid);
+      }
+
+      /* ===== DASHBOARD GRID ===== */
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .dashboard-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(20px);
+      }
+
+      .dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--glass);
+        color: var(--primary-solid);
+      }
+
+      .card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+
+      .card-change {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .card-change.positive {
+        color: #10b981;
+      }
+
+      .card-change.negative {
+        color: #ef4444;
+      }
+
+      /* ===== DATA TABLE ===== */
+      .data-table-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(20px);
+      }
+
+      .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .table-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .table-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-secondary {
+        background: var(--glass);
+        color: var(--text-primary);
+        border: 1px solid var(--border);
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+
+      .data-table th {
+        background: var(--glass);
+        padding: 1rem;
+        text-align: right;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .data-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-primary);
+      }
+
+      .data-table tr:hover {
+        background: var(--glass);
+      }
+
+      /* ===== MODAL SYSTEM ===== */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: var(--z-modal);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: var(--z-modal);
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(20px);
+      }
+
+      .modal-overlay.active .modal {
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .modal-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: var(--transition-fast);
+      }
+
+      .modal-close:hover {
+        background: var(--glass);
+        color: var(--text-primary);
+      }
+
+      /* ===== FLOATING ACTION BUTTON (RTL) ===== */
+      .fab {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem;
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: var(--shadow-lg);
+        transition: var(--transition-smooth);
+        z-index: 200;
+      }
+
+      .fab:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-xl);
+      }
+
+      /* ===== NOTIFICATION SYSTEM ===== */
+      .notifications-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: var(--z-notification);
+        width: 400px;
+        max-width: 90vw;
+      }
+
+      .notification {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        box-shadow: var(--shadow-md);
+        transform: translateX(100%);
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(20px);
+      }
+
+      .notification.show {
+        transform: translateX(0);
+      }
+
+      .notification.success {
+        border-left: 4px solid #10b981;
+      }
+
+      .notification.error {
+        border-left: 4px solid #ef4444;
+      }
+
+      .notification.warning {
+        border-left: 4px solid #f59e0b;
+      }
+
+      .notification.info {
+        border-left: 4px solid var(--primary-solid);
+      }
+
+      /* ===== RESPONSIVE DESIGN (RTL) ===== */
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(100%);
+          width: 100vw;
+          right: 0;
+          left: 0;
+          border-radius: 0;
+        }
+
+        .main-content {
+          margin-right: 0;
+          margin-left: 0;
+        }
+
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .command-trigger {
+          position: relative;
+          top: auto;
+          left: auto;
+          transform: none;
+          margin-bottom: 1rem;
+        }
+      }
+
+      /* ===== LOADING STATES ===== */
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(10, 14, 26, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: var(--z-overlay);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition-smooth);
+        backdrop-filter: blur(5px);
+      }
+
+      .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid var(--glass);
+        border-top: 3px solid var(--primary-solid);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      /* ===== FORM STYLES ===== */
+      .form-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 2rem;
+        backdrop-filter: blur(20px);
+      }
+
+      .form-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2rem;
+      }
+
+      .form-tab {
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        color: var(--text-secondary);
+        transition: var(--transition-fast);
+      }
+
+      .form-tab.active {
+        color: var(--primary-solid);
+        border-bottom-color: var(--primary-solid);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      /* ===== ANIMATIONS ===== */
+      .fade-in {
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .slide-in-left {
+        animation: slideInLeft 0.3s ease-out;
+      }
+
+      @keyframes slideInLeft {
+        from {
+          transform: translateX(-100%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+
+      /* ===== UTILITIES ===== */
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .text-left {
+        text-align: left;
+      }
+      .mb-1 {
+        margin-bottom: 0.5rem;
+      }
+      .mb-2 {
+        margin-bottom: 1rem;
+      }
+      .mb-3 {
+        margin-bottom: 1.5rem;
+      }
+      .mt-1 {
+        margin-top: 0.5rem;
+      }
+      .mt-2 {
+        margin-top: 1rem;
+      }
+      .mt-3 {
+        margin-top: 1.5rem;
+      }
+      .d-none {
+        display: none !important;
+      }
+      .d-flex {
+        display: flex !important;
+      }
+      .justify-center {
+        justify-content: center;
+      }
+      .justify-between {
+        justify-content: space-between;
+      }
+      .align-center {
+        align-items: center;
+      }
+      .gap-1 {
+        gap: 0.5rem;
+      }
+      .gap-2 {
+        gap: 1rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- App Background -->
+    <div class="app-background"></div>
+
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+      <div class="splash-logo">نظام نجارة ERP</div>
+      <div class="splash-tagline">نظام إدارة موارد المؤسسة المتطور</div>
+      <div class="splash-loader"></div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container" id="loginContainer">
+      <div class="login-card">
+        <div class="login-header">
+          <h1 class="login-title">مرحباً بك</h1>
+          <p class="login-subtitle">
+            قم بتسجيل الدخول للوصول إلى نظام إدارة الموارد
+          </p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label class="form-label" for="username">اسم المستخدم</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              class="form-input"
+              required
+              placeholder="أدخل اسم المستخدم"
+              autocomplete="username"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">كلمة المرور</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-input"
+              required
+              placeholder="أدخل كلمة المرور"
+              autocomplete="current-password"
+            />
+          </div>
+
+          <button type="submit" class="btn-login" id="loginBtn">
+            <span id="loginText">تسجيل الدخول</span>
+          </button>
+        </form>
       </div>
     </div>
-    <!-- Module View placeholder -->
-    <div id="moduleView">
-      <h2 id="moduleTitle">الوحدة</h2>
-      <div id="dataGrid">جاري تحميل البيانات...</div>
-    </div>
-    <!-- Form View placeholder -->
-    <div id="formView">
-      <h2>نموذج</h2>
-      <div id="formContainer">نموذج قيد التطوير</div>
-    </div>
-  </div>
 
-  <!-- Minimal Neural Dock from Dashboard.html -->
-  <div id="neuralDock">
-    <div class="dock-item" onclick="openModuleWindow('HRM')"><i class="bi bi-people fs-3"></i></div>
-    <div class="dock-item" onclick="openModuleWindow('PRJ')"><i class="bi bi-kanban fs-3"></i></div>
-    <div class="dock-item" onclick="openModuleWindow('FIN')"><i class="bi bi-cash-stack fs-3"></i></div>
-    <div class="dock-item" onclick="showDashboard()"><i class="bi bi-house fs-3"></i></div>
-  </div>
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+      <!-- Floating Sidebar -->
+      <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">نظام نجارة ERP</div>
+        </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Merged JS: Core init + minimal module loading -->
-  <script>
-    let currentModule = '';
-    // Init: Boot -> Dashboard
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        document.getElementById('bootScreen').classList.add('hidden');
-        setTimeout(() => document.getElementById('bootScreen').style.display = 'none', 1000);
-        loadDashboardData();
-      }, 3000);
-    });
-    // From Index: Navigation
-    function showDashboard() {
-      document.getElementById('dashboardView').style.display = 'block';
-      document.getElementById('moduleView').style.display = 'none';
-      document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
-      event.target.closest('.nav-link')?.classList.add('active');
-    }
-    function showModule(moduleCode) {
-      currentModule = moduleCode;
-      document.getElementById('dashboardView').style.display = 'none';
-      document.getElementById('moduleView').style.display = 'block';
-      document.getElementById('moduleTitle').textContent = moduleCode;
-      // Simulate data load
-      document.getElementById('dataGrid').innerHTML = `<p>بيانات وحدة ${moduleCode}</p>`;
-      document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
-      event.target.closest('.nav-link')?.classList.add('active');
-    }
-    // From Index: Load KPI
-    function loadDashboardData() {
-      // GAS call placeholder
-      document.getElementById('totalEmployees').textContent = '25';
-      document.getElementById('activeProjects').textContent = '8';
-      document.getElementById('totalRevenue').textContent = '150,000';
-      document.getElementById('completionRate').textContent = '85%';
-    }
-    // Minimal window from Dashboard dock
-    function openModuleWindow(module) {
-      const win = document.createElement('div');
-      win.className = 'kpi-card position-fixed'; win.style.cssText = 'top:20%; left:20%; width:400px; height:300px; z-index:100;';
-      win.innerHTML = `<h4>${module}</h4><p>نافذة من الـ Dock</p><button onclick="this.parentElement.remove()" class="btn btn-danger">إغلاق</button>`;
-      document.body.appendChild(win);
-      win.querySelector('h4').addEventListener('mousedown', (e) => {
-        // Simple drag
-        let dx=0, dy=0;
-        document.onmousemove = (ev) => {
-          dx = ev.clientX - e.clientX; dy = ev.clientY - e.clientY;
-          win.style.left = (parseInt(win.style.left) + dx) + 'px';
-          win.style.top = (parseInt(win.style.top) + dy) + 'px';
-        };
-        document.onmouseup = () => document.onmousemove = null;
-      });
-    }
-  </script>
-</body>
+        <ul class="sidebar-nav">
+          <li class="nav-item">
+            <a href="#dashboard" class="nav-link active" data-view="dashboard">
+              <i class="bi bi-house-door"></i>
+              <span>الرئيسية</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#hrm" class="nav-link" data-view="hrm">
+              <i class="bi bi-people"></i>
+              <span>الموارد البشرية</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#projects" class="nav-link" data-view="projects">
+              <i class="bi bi-kanban"></i>
+              <span>إدارة المشاريع</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#finance" class="nav-link" data-view="finance">
+              <i class="bi bi-cash-stack"></i>
+              <span>الشؤون المالية</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#system" class="nav-link" data-view="system">
+              <i class="bi bi-gear"></i>
+              <span>إدارة النظام</span>
+            </a>
+          </li>
+          <li class="nav-item" style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+            <a href="#" class="nav-link" id="logoutLink" style="color: var(--danger);">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>تسجيل الخروج</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="main-content" id="mainContent">
+        <!-- Command Palette Trigger -->
+        <div class="command-trigger" id="commandTrigger">
+          <i class="bi bi-command"></i>
+          <span>البحث السريع... (Ctrl+K)</span>
+        </div>
+
+        <!-- Dashboard View -->
+        <div class="view-container" id="dashboardView">
+          <div class="content-header">
+            <h1 class="page-title">لوحة التحكم الرئيسية</h1>
+          </div>
+
+          <!-- KPI Dashboard -->
+          <div class="dashboard-grid">
+            <div class="dashboard-card">
+              <div class="card-header">
+                <div class="card-title">إجمالي الموظفين</div>
+                <div class="card-icon">
+                  <i class="bi bi-people"></i>
+                </div>
+              </div>
+              <div class="card-value" id="totalEmployees">0</div>
+              <div class="card-change positive">+12% من الشهر الماضي</div>
+            </div>
+
+            <div class="dashboard-card">
+              <div class="card-header">
+                <div class="card-title">المشاريع النشطة</div>
+                <div class="card-icon">
+                  <i class="bi bi-kanban"></i>
+                </div>
+              </div>
+              <div class="card-value" id="activeProjects">0</div>
+              <div class="card-change positive">+3 مشاريع جديدة</div>
+            </div>
+
+            <div class="dashboard-card">
+              <div class="card-header">
+                <div class="card-title">الإيرادات الشهرية</div>
+                <div class="card-icon">
+                  <i class="bi bi-graph-up"></i>
+                </div>
+              </div>
+              <div class="card-value" id="monthlyRevenue">0 ريال</div>
+              <div class="card-change positive">+8.2% نمو</div>
+            </div>
+
+            <div class="dashboard-card">
+              <div class="card-header">
+                <div class="card-title">معدل الإنجاز</div>
+                <div class="card-icon">
+                  <i class="bi bi-check-circle"></i>
+                </div>
+              </div>
+              <div class="card-value" id="completionRate">0%</div>
+              <div class="card-change positive">تحسن ملحوظ</div>
+            </div>
+          </div>
+
+          <!-- Recent Activities Table -->
+          <div class="data-table-container">
+            <div class="table-header">
+              <h3 class="table-title">الأنشطة الأخيرة</h3>
+              <div class="table-actions">
+                <button class="btn btn-secondary">
+                  <i class="bi bi-funnel"></i>
+                  تصفية
+                </button>
+                <button class="btn btn-primary">
+                  <i class="bi bi-download"></i>
+                  تصدير
+                </button>
+              </div>
+            </div>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>النشاط</th>
+                  <th>المستخدم</th>
+                  <th>الوقت</th>
+                  <th>الحالة</th>
+                  <th>الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="recentActivities">
+                <!-- Dynamic content will be loaded here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- HRM View -->
+        <div class="view-container d-none" id="hrmView">
+          <div class="content-header">
+            <h1 class="page-title">الموارد البشرية</h1>
+          </div>
+          <!-- HRM content will be dynamically loaded -->
+        </div>
+
+        <!-- Projects View -->
+        <div class="view-container d-none" id="projectsView">
+          <div class="content-header">
+            <h1 class="page-title">إدارة المشاريع</h1>
+          </div>
+          <!-- Projects content will be dynamically loaded -->
+        </div>
+
+        <!-- Finance View -->
+        <div class="view-container d-none" id="financeView">
+          <div class="content-header">
+            <h1 class="page-title">الشؤون المالية</h1>
+          </div>
+          <!-- Finance content will be dynamically loaded -->
+        </div>
+
+        <!-- System View -->
+        <div class="view-container d-none" id="systemView">
+          <div class="content-header">
+            <h1 class="page-title">إدارة النظام</h1>
+          </div>
+          <!-- System content will be dynamically loaded -->
+        </div>
+      </main>
+    </div>
+
+    <!-- Command Palette -->
+    <div class="command-palette" id="commandPalette">
+      <input
+        type="text"
+        class="command-input"
+        id="commandInput"
+        placeholder="البحث في النظام..."
+      />
+      <div class="command-results" id="commandResults">
+        <!-- Search results will appear here -->
+      </div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal" id="modal">
+        <div class="modal-header">
+          <h3 class="modal-title" id="modalTitle">عنوان النافذة</h3>
+          <button class="modal-close" id="modalClose">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+        <div class="modal-content" id="modalContent">
+          <!-- Modal content will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div class="notifications-container" id="notificationsContainer">
+      <!-- Notifications will appear here -->
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="fab">
+      <i class="bi bi-plus"></i>
+    </button>
+
+    <!-- External Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+      // ===== NIJJARA ERP PROFESSIONAL SYSTEM =====
+      // Based on Implementation Guidelines Document
+
+      class NijjaraERP {
+        constructor() {
+          this.currentUser = null;
+          this.currentView = "dashboard";
+          this.bootstrap = null;
+          this.isLoading = false;
+          this.isInitialized = false;
+          this.intervals = []; // Track intervals to clear them
+
+          // API Configuration (Google Apps Script Web App)
+          this.API_BASE = '<?= API_URL ?>';
+          this.callServer = (name, ...args) =>
+            new Promise((resolve, reject) => {
+              try {
+                google.script.run
+                  .withSuccessHandler(resolve)
+                  .withFailureHandler(reject)[name].apply(google.script.run, args);
+              } catch (e) {
+                reject(e);
+              }
+            });
+          // Parse URL to allow forced fresh login (e.g., ?fresh=1)
+          const urlParams = new URLSearchParams(window.location.search);
+          this.forceFresh = urlParams.get('fresh') === '1' || urlParams.get('logout') === '1';
+
+          // No client-side credential artifacts; authentication is server-side only
+
+          this.init();
+        }
+
+        async init() {
+          console.log("🚀 Initializing Nijjara ERP System...");
+
+          // Ensure we don't initialize twice
+          if (this.isInitialized) {
+            console.log("Already initialized, skipping...");
+            return;
+          }
+          this.isInitialized = true;
+
+          // Cross-browser compatibility check
+          if (!this.checkBrowserCompatibility()) {
+            this.showBrowserWarning();
+            return;
+          }
+
+          // Configure toastr for Arabic (only if available)
+          if (window.toastr) {
+            toastr.options = {
+              closeButton: true,
+              debug: false,
+              newestOnTop: true,
+              progressBar: true,
+              positionClass: "toast-top-right",
+              preventDuplicates: true,
+              showDuration: "300",
+              hideDuration: "1000",
+              timeOut: "4000",
+              extendedTimeOut: "1000",
+              showEasing: "swing",
+              hideEasing: "linear",
+              showMethod: "fadeIn",
+              hideMethod: "fadeOut",
+              rtl: true,
+            };
+          }
+
+          // Setup event listeners
+          this.setupEventListeners();
+
+          // Global error handler
+          window.addEventListener("unhandledrejection", (event) => {
+            console.error("Unhandled promise rejection:", event.reason);
+            this.showNotification(
+              "خطأ في النظام",
+              "حدث خطأ غير متوقع. يرجى تحديث الصفحة.",
+              "error"
+            );
+          });
+
+          window.addEventListener("error", (event) => {
+            console.error("Global error:", event.error);
+            this.showNotification(
+              "خطأ في النظام",
+              "حدث خطأ في تحميل النظام. يرجى تحديث الصفحة.",
+              "error"
+            );
+          });
+
+          // Session handling – validate before auto-restore; support fresh login
+          if (this.forceFresh) {
+            localStorage.removeItem("nijjara_token");
+            localStorage.removeItem("nijjara_user");
+            this.showLogin();
+            return;
+          }
+          const storedToken = localStorage.getItem("nijjara_token");
+          const storedUser = localStorage.getItem("nijjara_user");
+          if (storedToken && storedUser) {
+            try {
+              const status = await this.callServer("getSessionStatus", storedToken);
+              if (status && status.success && status.valid) {
+                this.currentUser = JSON.parse(storedUser);
+                const bootstrapSuccess = await this.loadBootstrap();
+                if (bootstrapSuccess) {
+                  this.showApp();
+                  this.showNotification("مرحباً بعودتك", `أهلاً ${this.currentUser.name}`, "success");
+                } else {
+                  // loadBootstrap handled the UI (showLogin)
+                  console.warn("Bootstrap failed during auto-login");
+                }
+                return;
+              }
+            } catch (e) {
+              console.error("Session validation failed:", e);
+            }
+            // If we get here, session is invalid or error occurred
+            localStorage.removeItem("nijjara_token");
+            localStorage.removeItem("nijjara_user");
+            this.showLogin();
+          } else {
+            setTimeout(() => { this.showLogin(); }, 500);
+          }
+        }
+
+        async logout() {
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (token) {
+              // Try to notify server, but don't block if it fails
+              this.callServer("logout", token).catch(e => console.warn("Server logout failed", e));
+            }
+          } catch (e) {
+            console.error("Logout error", e);
+          } finally {
+            localStorage.removeItem("nijjara_token");
+            localStorage.removeItem("nijjara_user");
+            // Reload with fresh flag to prevent auto-restore
+            window.location.href = window.location.pathname + "?logout=1";
+          }
+        }
+
+        setupEventListeners() {
+          console.log("Setting up event listeners...");
+
+          // Login form
+          const loginForm = document.getElementById("loginForm");
+          if (loginForm) {
+            loginForm.addEventListener("submit", (e) => {
+              this.handleLogin(e);
+            });
+          }
+
+          // Navigation
+          document.querySelectorAll(".nav-link").forEach((link) => {
+            link.addEventListener("click", (e) => {
+              e.preventDefault();
+              if (e.currentTarget.id === "logoutLink") {
+                  this.logout();
+                  return;
+              }
+              const view = e.currentTarget.dataset.view;
+              if (view) this.switchView(view);
+            });
+          });
+
+          // Command palette trigger
+          const commandTrigger = document.getElementById("commandTrigger");
+          if (commandTrigger) {
+            commandTrigger.addEventListener("click", () => {
+              this.toggleCommandPalette();
+            });
+          }
+
+          // Keyboard shortcuts
+          document.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.key === "k") {
+              e.preventDefault();
+              this.toggleCommandPalette();
+            }
+            if (e.key === "Escape") {
+              this.closeModals();
+            }
+          });
+
+          // Modal controls
+          const modalClose = document.getElementById("modalClose");
+          if (modalClose) {
+            modalClose.addEventListener("click", () => {
+              this.closeModal();
+            });
+          }
+
+          const modalOverlay = document.getElementById("modalOverlay");
+          if (modalOverlay) {
+            modalOverlay.addEventListener("click", (e) => {
+              if (e.target === e.currentTarget) {
+                this.closeModal();
+              }
+            });
+          }
+
+          // FAB
+          const fab = document.getElementById("fab");
+          if (fab) {
+            fab.addEventListener("click", () => {
+              this.showQuickActions();
+            });
+          }
+
+          // Command input
+          const commandInput = document.getElementById("commandInput");
+          if (commandInput) {
+            commandInput.addEventListener("input", (e) => {
+              this.handleCommandSearch(e.target.value);
+            });
+          }
+        }
+
+        async handleLogin(e) {
+          e.preventDefault();
+
+          const usernameElement = document.getElementById("username");
+          const passwordElement = document.getElementById("password");
+          
+          if (!usernameElement || !passwordElement) {
+            console.error("Login form elements not found");
+            this.showNotification("خطأ", "نموذج تسجيل الدخول غير متوفر", "error");
+            return;
+          }
+
+          const username = usernameElement.value.trim();
+          const password = passwordElement.value.trim();
+
+          if (!username || !password) {
+            this.showNotification(
+              "خطأ",
+              "يرجى إدخال اسم المستخدم وكلمة المرور",
+              "error"
+            );
+            return;
+          }
+
+          // Show loading state
+          const loginBtn = document.getElementById("loginBtn");
+          const loginText = document.getElementById("loginText");
+          const originalText = loginText.textContent;
+
+          loginBtn.disabled = true;
+          loginText.textContent = "جاري التحقق...";
+
+          try {
+            const isValid = await this.validateCredentials(username, password);
+
+            if (isValid) {
+              // validateCredentials already handled token and user storage for API calls
+              // Load additional bootstrap data if not already loaded
+              if (!this.bootstrap || Object.keys(this.bootstrap).length === 0) {
+                await this.loadBootstrap();
+              }
+
+              this.showNotification(
+                "نجح تسجيل الدخول",
+                `مرحباً ${this.currentUser ? this.currentUser.name : username}`,
+                "success"
+              );
+
+              // Show app with slight delay for better UX
+              setTimeout(() => {
+                this.showApp();
+              }, 1000);
+            } else {
+              this.showNotification(
+                "فشل تسجيل الدخول",
+                "اسم المستخدم أو كلمة المرور غير صحيحة",
+                "error"
+              );
+            }
+          } catch (error) {
+            console.error("Login error:", error);
+            this.showNotification(
+              "خطأ في الاتصال",
+              "حدث خطأ أثناء تسجيل الدخول",
+              "error"
+            );
+          } finally {
+            loginBtn.disabled = false;
+            loginText.textContent = originalText;
+          }
+        }
+
+        async validateCredentials(username, password) {
+          try {
+            const data = await this.callServer("login", username, password);
+            if (data && data.success) {
+              this.currentUser = data.user;
+              this.bootstrap = data.bootstrap;
+              localStorage.setItem("nijjara_token", data.token);
+              localStorage.setItem("nijjara_user", JSON.stringify(data.user));
+              return true;
+            }
+            return false;
+          } catch (error) {
+            console.error("API call failed:", error);
+            return false;
+          }
+        }
+
+        // removed insecure client-side credential stubs
+
+        async loadBootstrap() {
+          console.log("📋 Loading bootstrap data...");
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) throw new Error("No authentication token");
+            const data = await this.callServer("getBootstrapDataObject", token);
+            if (data && data.success) {
+              this.bootstrap = {
+                forms: data.forms || [],
+                views: data.views || [],
+                buttons: data.buttons || [],
+                dropdowns: data.dropdowns || {},
+                permissions: data.permissions || {},
+                userRole: data.userRole || null,
+              };
+              return true;
+            }
+            localStorage.removeItem("nijjara_token");
+            localStorage.removeItem("nijjara_user");
+            throw new Error(data && data.message ? data.message : "Failed to load bootstrap data");
+          } catch (error) {
+            console.error("❌ Failed to load bootstrap data:", error);
+            this.bootstrap = { forms: [], views: [], buttons: [], dropdowns: {}, permissions: {}, userRole: null };
+            this.showNotification("تحذير", "تم تحميل البيانات الأساسية في الوضع المحدود", "warning");
+            this.showLogin();
+            return false;
+          }
+        }
+
+        showLogin() {
+          document.getElementById("splashScreen").classList.add("fade-out");
+          document.getElementById("loginContainer").classList.remove("hidden");
+        }
+
+        showApp() {
+          document.getElementById("splashScreen").classList.add("fade-out");
+          document.getElementById("loginContainer").classList.add("hidden");
+          document.getElementById("appContainer").classList.add("active");
+
+          // Show sidebar
+          setTimeout(() => {
+            document.getElementById("sidebar").classList.add("active");
+          }, 300);
+
+          // Load dashboard data
+          this.loadDashboardData();
+        }
+
+        async loadDashboardData() {
+          console.log("📊 Loading dashboard data...");
+          this.showLoading();
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) throw new Error("Authentication required");
+            const status = await this.callServer("getSessionStatus", token);
+            if (!status || !status.valid) throw new Error("Invalid session");
+            const data = await this.callServer("getDashboardKPIsObject", token);
+            if (data && data.success) {
+              const kpis = data.kpis || {};
+
+              // Animate real KPI values
+              const kpiMappings = [
+                {
+                  id: "totalEmployees",
+                  value: kpis.totalEmployees || 0,
+                  format: "number",
+                },
+                {
+                  id: "activeProjects",
+                  value: kpis.activeProjects || 0,
+                  format: "number",
+                },
+                {
+                  id: "monthlyRevenue",
+                  value: kpis.monthlyRevenue || 0,
+                  format: "currency",
+                },
+                {
+                  id: "completionRate",
+                  value: kpis.completionRate || 0,
+                  format: "percentage",
+                },
+              ];
+
+              kpiMappings.forEach((kpi, index) => {
+                setTimeout(() => {
+                  this.animateValue(kpi.id, 0, kpi.value, 2000, kpi.format);
+                }, index * 200);
+              });
+            } else {
+              console.error("Failed to load KPIs:", data.message);
+              // Show default values with warning
+              this.showNotification(
+                "تحذير",
+                "تعذر تحميل إحصائيات النظام",
+                "warning"
+              );
+            }
+          } catch (error) {
+            console.error("Error loading dashboard data:", error);
+            this.showNotification(
+              "خطأ",
+              "فشل في تحميل بيانات لوحة التحكم",
+              "error"
+            );
+          } finally {
+            this.hideLoading();
+          }
+
+          // Load recent activities
+          this.loadRecentActivities();
+        }
+
+        clearIntervals() {
+          this.intervals.forEach(timer => clearInterval(timer));
+          this.intervals = [];
+        }
+
+        animateValue(elementId, start, end, duration, format = "number") {
+          const element = document.getElementById(elementId);
+          if (!element) return;
+
+          const range = end - start;
+          const increment = range / (duration / 16);
+          let current = start;
+
+          const timer = setInterval(() => {
+            current += increment;
+            if ((range > 0 && current >= end) || (range < 0 && current <= end)) {
+              current = end;
+              clearInterval(timer);
+              this.intervals = this.intervals.filter(t => t !== timer);
+            }
+
+            let displayValue = Math.floor(current);
+
+            switch (format) {
+              case "currency":
+                displayValue = displayValue.toLocaleString("ar-SA") + " ريال";
+                break;
+              case "percentage":
+                displayValue = displayValue + "%";
+                break;
+              default:
+                displayValue = displayValue.toLocaleString("ar-SA");
+            }
+
+            element.textContent = displayValue;
+          }, 16);
+          
+          this.intervals.push(timer);
+        }
+
+        async loadRecentActivities() {
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) throw new Error("Authentication required");
+            const data = await this.callServer("getRecentAuditLogsObject", token, 10);
+            if (data && data.success) this.renderRecentActivities(data.activities || []);
+            else this.renderRecentActivities([]);
+          } catch (error) {
+            console.error("Error loading recent activities:", error);
+            this.renderRecentActivities([]);
+          }
+        }
+
+        renderRecentActivities(activities) {
+          const tbody = document.getElementById("recentActivities");
+
+          if (!activities || activities.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  لا توجد أنشطة حديثة
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          tbody.innerHTML = activities
+            .map(
+              (activity) => `
+                <tr>
+                  <td>${activity.action_desc || activity.USR_Action || ""}</td>
+                  <td>${activity.user_name || activity.USR_Name || ""}</td>
+                  <td>${this.formatTimeAgo(
+                    activity.timestamp || activity.AUD_Time_Stamp
+                  )}</td>
+                  <td><span class="badge success">مكتمل</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-secondary" onclick="nijjaraERP.viewActivityDetails('${
+                      activity.AUD_ID
+                    }')">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              `
+            )
+            .join("");
+        }
+
+        formatTimeAgo(timestamp) {
+          try {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffMins < 60) {
+              return `منذ ${diffMins} دقيقة`;
+            } else if (diffHours < 24) {
+              return `منذ ${diffHours} ساعة`;
+            } else if (diffDays < 7) {
+              return `منذ ${diffDays} يوم`;
+            } else {
+              return date.toLocaleDateString("ar-SA");
+            }
+          } catch (error) {
+            return "غير محدد";
+          }
+        }
+
+        switchView(viewName) {
+          console.log(`🔄 Switching to view: ${viewName}`);
+
+          // Clear any running animations
+          this.clearIntervals();
+
+          // Update navigation
+          document.querySelectorAll(".nav-link").forEach((link) => {
+            link.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-view="${viewName}"]`)
+            .classList.add("active");
+
+          // Hide all views
+          document.querySelectorAll(".view-container").forEach((view) => {
+            view.classList.add("d-none");
+          });
+
+          // Show target view
+          const targetView = document.getElementById(`${viewName}View`);
+          if (targetView) {
+            targetView.classList.remove("d-none");
+            targetView.classList.add("fade-in");
+          }
+
+          this.currentView = viewName;
+
+          // Load view-specific data
+          this.loadViewData(viewName);
+        }
+
+        async loadViewData(viewName) {
+          console.log(`📁 Loading data for view: ${viewName}`);
+
+          this.showLoading();
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) {
+              throw new Error("Authentication required");
+            }
+
+            // Map view names to actual VIEW_IDs from ENG_Views.csv
+            const viewMapping = {
+              hrm: "VIEW_HRM_Employees",
+              projects: "VIEW_PRJ_Main",
+              finance: "VIEW_FIN_DirectExpenses",
+              system: "VIEW_SYS_Users",
+              // Additional views available
+              departments: "VIEW_HRM_Departments",
+              attendance: "VIEW_HRM_Attendance",
+              leave: "VIEW_HRM_Leave",
+              advances: "VIEW_HRM_Advances",
+              overtime: "VIEW_HRM_OverTime",
+              deductions: "VIEW_HRM_Deductions",
+              clients: "VIEW_PRJ_Clients",
+              tasks: "VIEW_PRJ_Tasks",
+              materials: "VIEW_PRJ_Material",
+              revenue: "VIEW_FIN_PRJ_Revenue",
+              custody: "VIEW_FIN_Custody",
+              payroll: "VIEW_FIN_HRM_Payroll",
+              roles: "VIEW_SYS_Roles",
+              permissions: "VIEW_SYS_Permissions",
+              sessions: "VIEW_SYS_Sessions",
+              documents: "VIEW_SYS_Documents",
+              holidays: "VIEW_SYS_PubHolidays",
+              audit: "VIEW_SYS_AuditLog",
+            };
+
+            const viewId = viewMapping[viewName];
+            if (viewId) {
+              const data = await this.callServer("getModuleData", viewId, token, { page: 1, pageSize: 25, searchTerm: "", sortColumn: null, sortDirection: "asc" });
+              if (data && data.success) this.renderViewData(viewName, data);
+              else await this.loadFallbackData(viewName);
+            } else {
+              // Load fallback data for unmapped views
+              await this.loadFallbackData(viewName);
+            }
+          } catch (error) {
+            console.error(`Error loading ${viewName} data:`, error);
+            await this.loadFallbackData(viewName);
+          } finally {
+            this.hideLoading();
+          }
+        }
+
+        async loadFallbackData(viewName) {
+          // Fallback to dummy data when API is not available
+          switch (viewName) {
+            case "hrm":
+              await this.loadHRMData();
+              break;
+            case "projects":
+              await this.loadProjectsData();
+              break;
+            case "finance":
+              await this.loadFinanceData();
+              break;
+            case "system":
+              await this.loadSystemData();
+              break;
+            default:
+              break;
+          }
+        }
+
+        renderViewData(viewName, apiData) {
+          // Render real data from API response
+          const targetView = document.getElementById(`${viewName}View`);
+          if (!targetView) return;
+
+          let html = `
+            <div class="content-header">
+              <h1 class="page-title">${
+                apiData.viewTitle || this.getViewTitle(viewName)
+              }</h1>
+            </div>
+          `;
+
+          // Add KPI cards based on real data
+          html += this.generateKPICards(viewName, apiData);
+
+          // Add data table with real data
+          html += this.generateDataTable(viewName, apiData);
+
+          targetView.innerHTML = html;
+        }
+
+        getViewTitle(viewName) {
+          const titles = {
+            hrm: "الموارد البشرية",
+            projects: "إدارة المشاريع",
+            finance: "الشؤون المالية",
+            system: "إدارة النظام",
+          };
+          return titles[viewName] || viewName;
+        }
+
+        generateKPICards(viewName, apiData) {
+          // Generate KPI cards based on real data
+          const totalRecords = apiData.pagination
+            ? apiData.pagination.totalRecords
+            : 0;
+
+          return `
+            <div class="dashboard-grid">
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">إجمالي السجلات</div>
+                  <div class="card-icon"><i class="bi bi-database"></i></div>
+                </div>
+                <div class="card-value">${totalRecords}</div>
+                <div class="card-change positive">البيانات الحية</div>
+              </div>
+            </div>
+          `;
+        }
+
+        generateDataTable(viewName, apiData) {
+          if (!apiData.data || apiData.data.length === 0) {
+            return `
+              <div class="data-table-container">
+                <div class="table-header">
+                  <h3 class="table-title">لا توجد بيانات</h3>
+                </div>
+                <p style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                  لم يتم العثور على أي سجلات في هذا القسم
+                </p>
+              </div>
+            `;
+          }
+
+          let tableHTML = `
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">${apiData.viewTitle || "البيانات"}</h3>
+                <div class="table-actions">
+                  <button class="btn btn-primary" onclick="nijjaraERP.showModal('إضافة سجل جديد', 'هنا سيتم عرض نموذج إضافة سجل جديد')">
+                    <i class="bi bi-plus"></i>
+                    إضافة جديد
+                  </button>
+                </div>
+              </div>
+              
+              <table class="data-table">
+                <thead>
+                  <tr>
+          `;
+
+          // Add headers from real data
+          if (apiData.headers && apiData.headers.length > 0) {
+            apiData.headers.forEach((header) => {
+              tableHTML += `<th>${header}</th>`;
+            });
+          }
+          tableHTML += `<th>الإجراءات</th></tr></thead><tbody>`;
+
+          // Add rows from real data
+          apiData.data.forEach((row) => {
+            tableHTML += `<tr>`;
+            row.cells.forEach((cell) => {
+              tableHTML += `<td>${cell || ""}</td>`;
+            });
+            tableHTML += `
+              <td>
+                <button class="btn btn-sm btn-secondary"><i class="bi bi-eye"></i></button>
+                <button class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></button>
+              </td>
+            </tr>`;
+          });
+
+          tableHTML += `</tbody></table></div>`;
+          return tableHTML;
+        }
+
+        async loadHRMData() {
+          console.log("📁 Loading HRM module data...");
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) {
+              throw new Error("Authentication required");
+            }
+
+            // Load HRM employee data
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "getModuleData",
+                viewId: "VIEW_HRM_Employees",
+                token: token,
+                options: {
+                  page: 1,
+                  pageSize: 25,
+                },
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+              this.renderHRMView(data);
+            } else {
+              console.error("Failed to load HRM data:", data.message);
+              this.renderHRMError();
+            }
+          } catch (error) {
+            console.error("Error loading HRM data:", error);
+            this.renderHRMError();
+            this.showNotification(
+              "خطأ",
+              "فشل في تحميل بيانات الموارد البشرية",
+              "error"
+            );
+          }
+        }
+
+        renderHRMView(data) {
+          const hrmView = document.getElementById("hrmView");
+          const totalEmployees = data.pagination
+            ? data.pagination.totalRecords
+            : 0;
+
+          hrmView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">الموارد البشرية</h1>
+            </div>
+            
+            <div class="dashboard-grid">
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">إجمالي الموظفين</div>
+                  <div class="card-icon"><i class="bi bi-people"></i></div>
+                </div>
+                <div class="card-value">${totalEmployees}</div>
+                <div class="card-change positive">البيانات الحية</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">الأقسام النشطة</div>
+                  <div class="card-icon"><i class="bi bi-building"></i></div>
+                </div>
+                <div class="card-value" id="activeDepartments">-</div>
+                <div class="card-change">محدث تلقائياً</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">الموظفون الجدد</div>
+                  <div class="card-icon"><i class="bi bi-person-plus"></i></div>
+                </div>
+                <div class="card-value" id="newEmployees">-</div>
+                <div class="card-change">هذا الشهر</div>
+              </div>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">قائمة الموظفين</h3>
+                <div class="table-actions">
+                  <button class="btn btn-primary" onclick="nijjaraERP.showEmployeeForm()">
+                    <i class="bi bi-plus"></i>
+                    إضافة موظف
+                  </button>
+                  <button class="btn btn-secondary" onclick="nijjaraERP.exportData('employees')">
+                    <i class="bi bi-download"></i>
+                    تصدير
+                  </button>
+                </div>
+              </div>
+              
+              ${this.generateDataTable("HRM", data)}
+            </div>
+          `;
+        }
+
+        renderHRMError() {
+          const hrmView = document.getElementById("hrmView");
+          hrmView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">الموارد البشرية</h1>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">خطأ في تحميل البيانات</h3>
+              </div>
+              <p style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                تعذر تحميل بيانات الموارد البشرية. يرجى المحاولة مرة أخرى.
+              </p>
+              <div style="text-align: center;">
+                <button class="btn btn-primary" onclick="nijjaraERP.switchView('hrm')">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  إعادة المحاولة
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        async loadProjectsData() {
+          console.log("📁 Loading Projects module data...");
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) {
+              throw new Error("Authentication required");
+            }
+
+            // Load Projects data
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "getModuleData",
+                viewId: "VIEW_PRJ_Main",
+                token: token,
+                options: {
+                  page: 1,
+                  pageSize: 25,
+                },
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+              this.renderProjectsView(data);
+            } else {
+              console.error("Failed to load Projects data:", data.message);
+              this.renderProjectsError();
+            }
+          } catch (error) {
+            console.error("Error loading Projects data:", error);
+            this.renderProjectsError();
+            this.showNotification(
+              "خطأ",
+              "فشل في تحميل بيانات المشاريع",
+              "error"
+            );
+          }
+        }
+
+        renderProjectsView(data) {
+          const projectsView = document.getElementById("projectsView");
+          const totalProjects = data.pagination
+            ? data.pagination.totalRecords
+            : 0;
+
+          projectsView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">إدارة المشاريع</h1>
+            </div>
+            
+            <div class="dashboard-grid">
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">إجمالي المشاريع</div>
+                  <div class="card-icon"><i class="bi bi-kanban"></i></div>
+                </div>
+                <div class="card-value">${totalProjects}</div>
+                <div class="card-change positive">البيانات الحية</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">العملاء النشطون</div>
+                  <div class="card-icon"><i class="bi bi-people"></i></div>
+                </div>
+                <div class="card-value" id="activeClients">-</div>
+                <div class="card-change">محدث تلقائياً</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">الميزانية الإجمالية</div>
+                  <div class="card-icon"><i class="bi bi-currency-dollar"></i></div>
+                </div>
+                <div class="card-value" id="totalBudget">-</div>
+                <div class="card-change">جميع المشاريع</div>
+              </div>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">قائمة المشاريع</h3>
+                <div class="table-actions">
+                  <button class="btn btn-primary" onclick="nijjaraERP.showProjectForm()">
+                    <i class="bi bi-plus"></i>
+                    إضافة مشروع
+                  </button>
+                  <button class="btn btn-secondary" onclick="nijjaraERP.exportData('projects')">
+                    <i class="bi bi-download"></i>
+                    تصدير
+                  </button>
+                </div>
+              </div>
+              
+              ${this.generateDataTable("PRJ", data)}
+            </div>
+          `;
+        }
+
+        renderProjectsError() {
+          const projectsView = document.getElementById("projectsView");
+          projectsView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">إدارة المشاريع</h1>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">خطأ في تحميل البيانات</h3>
+              </div>
+              <p style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                تعذر تحميل بيانات المشاريع. يرجى المحاولة مرة أخرى.
+              </p>
+              <div style="text-align: center;">
+                <button class="btn btn-primary" onclick="nijjaraERP.switchView('projects')">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  إعادة المحاولة
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        async loadFinanceData() {
+          console.log("📁 Loading Finance module data...");
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) {
+              throw new Error("Authentication required");
+            }
+
+            // Load Finance Direct Expenses data
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "getModuleData",
+                viewId: "VIEW_FIN_DirectExpenses",
+                token: token,
+                options: {
+                  page: 1,
+                  pageSize: 25,
+                },
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+              this.renderFinanceView(data);
+            } else {
+              console.error("Failed to load Finance data:", data.message);
+              this.renderFinanceError();
+            }
+          } catch (error) {
+            console.error("Error loading Finance data:", error);
+            this.renderFinanceError();
+            this.showNotification(
+              "خطأ",
+              "فشل في تحميل البيانات المالية",
+              "error"
+            );
+          }
+        }
+
+        renderFinanceView(data) {
+          const financeView = document.getElementById("financeView");
+          const totalExpenses = data.pagination
+            ? data.pagination.totalRecords
+            : 0;
+
+          financeView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">الشؤون المالية</h1>
+            </div>
+            
+            <div class="dashboard-grid">
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">إجمالي المصروفات المباشرة</div>
+                  <div class="card-icon"><i class="bi bi-receipt"></i></div>
+                </div>
+                <div class="card-value">${totalExpenses}</div>
+                <div class="card-change positive">البيانات الحية</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">المدفوعات المعلقة</div>
+                  <div class="card-icon"><i class="bi bi-clock"></i></div>
+                </div>
+                <div class="card-value" id="pendingPayments">-</div>
+                <div class="card-change">محدث تلقائياً</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">إجمالي القيمة</div>
+                  <div class="card-icon"><i class="bi bi-cash-stack"></i></div>
+                </div>
+                <div class="card-value" id="totalAmount">-</div>
+                <div class="card-change">جميع المصروفات</div>
+              </div>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">المصروفات المباشرة</h3>
+                <div class="table-actions">
+                  <button class="btn btn-primary" onclick="nijjaraERP.showExpenseForm()">
+                    <i class="bi bi-plus"></i>
+                    إضافة مصروف
+                  </button>
+                  <button class="btn btn-secondary" onclick="nijjaraERP.exportData('expenses')">
+                    <i class="bi bi-download"></i>
+                    تصدير
+                  </button>
+                </div>
+              </div>
+              
+              ${this.generateDataTable("FIN", data)}
+            </div>
+          `;
+        }
+
+        renderFinanceError() {
+          const financeView = document.getElementById("financeView");
+          financeView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">الشؤون المالية</h1>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">خطأ في تحميل البيانات</h3>
+              </div>
+              <p style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                تعذر تحميل البيانات المالية. يرجى المحاولة مرة أخرى.
+              </p>
+              <div style="text-align: center;">
+                <button class="btn btn-primary" onclick="nijjaraERP.switchView('finance')">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  إعادة المحاولة
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        async loadSystemData() {
+          console.log("📁 Loading System module data...");
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) {
+              throw new Error("Authentication required");
+            }
+
+            // Load System Users data
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "getModuleData",
+                viewId: "VIEW_SYS_Users",
+                token: token,
+                options: {
+                  page: 1,
+                  pageSize: 25,
+                },
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+              this.renderSystemView(data);
+            } else {
+              console.error("Failed to load System data:", data.message);
+              this.renderSystemError();
+            }
+          } catch (error) {
+            console.error("Error loading System data:", error);
+            this.renderSystemError();
+            this.showNotification("خطأ", "فشل في تحميل بيانات النظام", "error");
+          }
+        }
+
+        renderSystemView(data) {
+          const systemView = document.getElementById("systemView");
+          const totalUsers = data.pagination ? data.pagination.totalRecords : 0;
+
+          systemView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">إدارة النظام</h1>
+            </div>
+            
+            <div class="dashboard-grid">
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">إجمالي المستخدمين</div>
+                  <div class="card-icon"><i class="bi bi-people"></i></div>
+                </div>
+                <div class="card-value">${totalUsers}</div>
+                <div class="card-change positive">البيانات الحية</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">الجلسات النشطة</div>
+                  <div class="card-icon"><i class="bi bi-activity"></i></div>
+                </div>
+                <div class="card-value" id="activeSessions">-</div>
+                <div class="card-change">محدث تلقائياً</div>
+              </div>
+              
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <div class="card-title">حالة النظام</div>
+                  <div class="card-icon"><i class="bi bi-shield-check"></i></div>
+                </div>
+                <div class="card-value">نشط</div>
+                <div class="card-change positive">آمن</div>
+              </div>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">قائمة المستخدمين</h3>
+                <div class="table-actions">
+                  <button class="btn btn-primary" onclick="nijjaraERP.showUserForm()">
+                    <i class="bi bi-plus"></i>
+                    إضافة مستخدم
+                  </button>
+                  <button class="btn btn-secondary" onclick="nijjaraERP.exportData('users')">
+                    <i class="bi bi-download"></i>
+                    تصدير
+                  </button>
+                </div>
+              </div>
+              
+              ${this.generateDataTable("SYS", data)}
+            </div>
+          `;
+        }
+
+        renderSystemError() {
+          const systemView = document.getElementById("systemView");
+          systemView.innerHTML = `
+            <div class="content-header">
+              <h1 class="page-title">إدارة النظام</h1>
+            </div>
+            
+            <div class="data-table-container">
+              <div class="table-header">
+                <h3 class="table-title">خطأ في تحميل البيانات</h3>
+              </div>
+              <p style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                تعذر تحميل بيانات النظام. يرجى المحاولة مرة أخرى.
+              </p>
+              <div style="text-align: center;">
+                <button class="btn btn-primary" onclick="nijjaraERP.switchView('system')">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  إعادة المحاولة
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        toggleCommandPalette() {
+          const palette = document.getElementById("commandPalette");
+          palette.classList.toggle("active");
+
+          if (palette.classList.contains("active")) {
+            document.getElementById("commandInput").focus();
+          }
+        }
+
+        handleCommandSearch(query) {
+          const results = document.getElementById("commandResults");
+
+          if (!query.trim()) {
+            results.innerHTML = `
+                        <div class="command-item">
+                            <i class="bi bi-search"></i>
+                            <div>
+                                <div>ابحث في النظام...</div>
+                                <small>أدخل كلمة البحث للعثور على الصفحات والوظائف</small>
+                            </div>
+                        </div>
+                    `;
+            return;
+          }
+
+          // Mock search results
+          const mockResults = [
+            {
+              icon: "bi-people",
+              title: "الموارد البشرية",
+              description: "إدارة الموظفين والحضور",
+            },
+            {
+              icon: "bi-kanban",
+              title: "إدارة المشاريع",
+              description: "متابعة المشاريع والمهام",
+            },
+            {
+              icon: "bi-cash-stack",
+              title: "الشؤون المالية",
+              description: "الحسابات والمصروفات",
+            },
+            {
+              icon: "bi-gear",
+              title: "إعدادات النظام",
+              description: "إدارة المستخدمين والصلاحيات",
+            },
+          ];
+
+          const filteredResults = mockResults.filter(
+            (result) =>
+              result.title.includes(query) || result.description.includes(query)
+          );
+
+          results.innerHTML =
+            filteredResults
+              .map(
+                (result) => `
+                    <div class="command-item" onclick="nijjaraERP.executeCommand('${result.title}')">
+                        <i class="bi ${result.icon}"></i>
+                        <div>
+                            <div>${result.title}</div>
+                            <small>${result.description}</small>
+                        </div>
+                    </div>
+                `
+              )
+              .join("") ||
+            `
+                    <div class="command-item">
+                        <i class="bi bi-x-circle"></i>
+                        <div>لم يتم العثور على نتائج</div>
+                    </div>
+                `;
+        }
+
+        executeCommand(command) {
+          this.toggleCommandPalette();
+
+          // Map commands to views
+          const commandMap = {
+            "الموارد البشرية": "hrm",
+            "إدارة المشاريع": "projects",
+            "الشؤون المالية": "finance",
+            "إعدادات النظام": "system",
+          };
+
+          const view = commandMap[command];
+          if (view) {
+            this.switchView(view);
+            this.showNotification(
+              "تم التنقل",
+              `تم الانتقال إلى ${command}`,
+              "info"
+            );
+          }
+        }
+
+        showModal(title, content) {
+          document.getElementById("modalTitle").textContent = title;
+          document.getElementById("modalContent").innerHTML = content;
+          document.getElementById("modalOverlay").classList.add("active");
+        }
+
+        closeModal() {
+          document.getElementById("modalOverlay").classList.remove("active");
+        }
+
+        closeModals() {
+          this.closeModal();
+          document.getElementById("commandPalette").classList.remove("active");
+        }
+
+        showQuickActions() {
+          this.showModal(
+            "إجراءات سريعة",
+            `
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card" style="cursor: pointer;" onclick="nijjaraERP.switchView('hrm')">
+                            <div class="card-header">
+                                <div class="card-title">إضافة موظف</div>
+                                <div class="card-icon"><i class="bi bi-person-plus"></i></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card" style="cursor: pointer;" onclick="nijjaraERP.switchView('projects')">
+                            <div class="card-header">
+                                <div class="card-title">مشروع جديد</div>
+                                <div class="card-icon"><i class="bi bi-plus-circle"></i></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card" style="cursor: pointer;" onclick="nijjaraERP.switchView('finance')">
+                            <div class="card-header">
+                                <div class="card-title">إدخال مصروف</div>
+                                <div class="card-icon"><i class="bi bi-receipt"></i></div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card" style="cursor: pointer;">
+                            <div class="card-header">
+                                <div class="card-title">تقرير سريع</div>
+                                <div class="card-icon"><i class="bi bi-file-earmark-text"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                `
+          );
+        }
+
+        showLoading() {
+          this.isLoading = true;
+          document.getElementById("loadingOverlay").classList.add("active");
+        }
+
+        hideLoading() {
+          this.isLoading = false;
+          document.getElementById("loadingOverlay").classList.remove("active");
+        }
+
+        showNotification(title, message, type = "info") {
+          // Use only toastr for notifications
+          if (window.toastr && toastr[type]) {
+            // Configure toastr for better display
+            toastr.options = {
+              closeButton: true,
+              debug: false,
+              newestOnTop: true,
+              progressBar: true,
+              positionClass: "toast-top-right",
+              preventDuplicates: false, // Allow duplicates to stack if needed, or set to true
+              showDuration: "300",
+              hideDuration: "1000",
+              timeOut: "4000",
+              extendedTimeOut: "1000",
+              showEasing: "swing",
+              hideEasing: "linear",
+              showMethod: "fadeIn",
+              hideMethod: "fadeOut",
+              rtl: true,
+            };
+
+            toastr[type](message, title);
+          } else {
+            // Fallback to custom notification if toastr not available
+            this.showCustomNotification(title, message, type);
+          }
+        }
+
+        showCustomNotification(title, message, type) {
+          const notification = document.createElement("div");
+          notification.className = `notification ${type}`;
+          notification.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">${title}</div>
+                <div style="color: var(--text-secondary); font-size: 0.9rem;">${message}</div>
+              </div>
+              <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">&times;</button>
+            </div>
+          `;
+
+          const container = document.getElementById("notificationsContainer");
+          if (container) {
+            container.appendChild(notification);
+
+            // Show notification
+            setTimeout(() => {
+              notification.classList.add("show");
+            }, 100);
+
+            // Auto remove
+            setTimeout(() => {
+              notification.classList.remove("show");
+              setTimeout(() => {
+                if (notification.parentElement) {
+                  notification.remove();
+                }
+              }, 300);
+            }, 5000);
+          }
+        }
+
+        checkBrowserCompatibility() {
+          // Check for required features
+          const requiredFeatures = [
+            "fetch",
+            "Promise",
+            "localStorage",
+            "addEventListener",
+            "querySelector",
+            "classList",
+          ];
+
+          for (const feature of requiredFeatures) {
+            if (feature === "fetch" && !window.fetch) return false;
+            if (feature === "Promise" && !window.Promise) return false;
+            if (feature === "localStorage" && !window.localStorage)
+              return false;
+            if (feature === "addEventListener" && !document.addEventListener)
+              return false;
+            if (feature === "querySelector" && !document.querySelector)
+              return false;
+          }
+
+          // Check for CSS features
+          const testElement = document.createElement("div");
+          testElement.style.display = "flex";
+          if (testElement.style.display !== "flex") {
+            return false;
+          }
+
+          return true;
+        }
+
+        showBrowserWarning() {
+          document.body.innerHTML = `
+            <div style="padding: 2rem; text-align: center; font-family: Arial, sans-serif;">
+              <h1 style="color: #dc3545;">متصفح غير مدعوم</h1>
+              <p style="font-size: 1.1rem; margin: 1rem 0;">
+                هذا النظام يتطلب متصفح حديث. يرجى استخدام أحد المتصفحات التالية:
+              </p>
+              <ul style="text-align: right; display: inline-block; margin: 1rem 0;">
+                <li>Google Chrome 70+ أو أحدث</li>
+                <li>Mozilla Firefox 65+ أو أحدث</li>
+                <li>Microsoft Edge 79+ أو أحدث</li>
+                <li>Safari 12+ أو أحدث</li>
+              </ul>
+              <p style="color: #666;">
+                إصدار متصفحك الحالي لا يدعم الميزات المطلوبة لتشغيل هذا النظام.
+              </p>
+            </div>
+          `;
+        }
+
+        viewActivityDetails(audId) {
+          if (!audId) {
+            this.showNotification("خطأ", "معرف النشاط غير صحيح", "error");
+            return;
+          }
+
+          this.showModal(
+            "تفاصيل النشاط",
+            `
+            <div id="activityDetails">
+              <div style="text-align: center; padding: 2rem;">
+                <i class="bi bi-hourglass-split" style="font-size: 2rem; color: var(--primary-solid);"></i>
+                <p style="margin-top: 1rem;">جاري تحميل تفاصيل النشاط...</p>
+              </div>
+            </div>
+          `
+          );
+
+          // Load activity details
+          this.loadActivityDetails(audId);
+        }
+
+        async loadActivityDetails(audId) {
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            if (!token) throw new Error("Authentication required");
+            const data = await this.callServer("getAuditLogDetailsObject", token, audId);
+            if (data && data.success) {
+              const details = data.details;
+              document.getElementById("activityDetails").innerHTML = `
+                <div class="form-container">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">معرف النشاط</label>
+                      <input class="form-input" value="${
+                        details.AUD_ID || ""
+                      }" readonly>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">المستخدم</label>
+                      <input class="form-input" value="${
+                        details.USR_Name || ""
+                      }" readonly>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">الإجراء</label>
+                      <input class="form-input" value="${
+                        details.USR_Action || ""
+                      }" readonly>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">الوقت</label>
+                      <input class="form-input" value="${this.formatDateTime(
+                        details.AUD_Time_Stamp
+                      )}" readonly>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">الوصف</label>
+                    <textarea class="form-input" rows="3" readonly>${
+                      details.ACT_Description || ""
+                    }</textarea>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">الكيان المتأثر</label>
+                      <input class="form-input" value="${
+                        details.AUD_Entity || ""
+                      }" readonly>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">معرف الكيان</label>
+                      <input class="form-input" value="${
+                        details.AUD_Entity_ID || ""
+                      }" readonly>
+                    </div>
+                  </div>
+                </div>
+              `;
+            } else {
+              document.getElementById("activityDetails").innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                  <i class="bi bi-exclamation-circle" style="font-size: 2rem;"></i>
+                  <p style="margin-top: 1rem;">تعذر تحميل تفاصيل النشاط</p>
+                </div>
+              `;
+            }
+          } catch (error) {
+            console.error("Error loading activity details:", error);
+            document.getElementById("activityDetails").innerHTML = `
+              <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <i class="bi bi-x-circle" style="font-size: 2rem; color: var(--danger);"></i>
+                <p style="margin-top: 1rem;">حدث خطأ في تحميل التفاصيل</p>
+              </div>
+            `;
+          }
+        }
+
+        formatDateTime(timestamp) {
+          try {
+            const date = new Date(timestamp);
+            return date.toLocaleString("ar-SA", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          } catch (error) {
+            return timestamp || "غير محدد";
+          }
+        }
+
+        generateDataTable(moduleType, data) {
+          if (!data.data || data.data.length === 0) {
+            return `
+              <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                <i class="bi bi-inbox" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p style="font-size: 1.1rem;">لا توجد بيانات لعرضها</p>
+                <p>ابدأ بإضافة البيانات باستخدام الزر "إضافة" أعلاه</p>
+              </div>
+            `;
+          }
+
+          let tableHTML = `
+            <table class="data-table">
+              <thead>
+                <tr>
+          `;
+
+          // Add headers
+          if (data.headers && data.headers.length > 0) {
+            data.headers.forEach((header) => {
+              tableHTML += `<th>${header}</th>`;
+            });
+          }
+          tableHTML += `<th>الإجراءات</th></tr></thead><tbody>`;
+
+          // Add rows
+          data.data.forEach((row, index) => {
+            tableHTML += `<tr>`;
+            if (row.cells) {
+              row.cells.forEach((cell) => {
+                let cellValue = cell || "";
+
+                // Format specific data types
+                if (typeof cellValue === "number" && cellValue > 1000000) {
+                  cellValue = (cellValue / 1000000).toFixed(1) + "M";
+                } else if (typeof cellValue === "number" && cellValue > 1000) {
+                  cellValue = (cellValue / 1000).toFixed(1) + "K";
+                }
+
+                tableHTML += `<td>${cellValue}</td>`;
+              });
+            }
+
+            tableHTML += `
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="nijjaraERP.viewRecord('${moduleType}', '${index}')" title="عرض">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="nijjaraERP.editRecord('${moduleType}', '${index}')" title="تعديل">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                ${this.generateModuleSpecificButtons(moduleType, index)}
+              </td>
+            </tr>`;
+          });
+
+          tableHTML += `</tbody></table>`;
+
+          // Add pagination if available
+          if (data.pagination && data.pagination.totalPages > 1) {
+            tableHTML += this.generatePagination(data.pagination);
+          }
+
+          return tableHTML;
+        }
+
+        generatePagination(pagination) {
+          let paginationHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 1rem; border-top: 1px solid var(--border);">
+              <div>
+                عرض ${
+                  pagination.currentPage * pagination.pageSize -
+                  pagination.pageSize +
+                  1
+                } - 
+                ${Math.min(
+                  pagination.currentPage * pagination.pageSize,
+                  pagination.totalRecords
+                )} 
+                من ${pagination.totalRecords} سجل
+              </div>
+              <div>
+          `;
+
+          // Previous button
+          if (pagination.currentPage > 1) {
+            paginationHTML += `
+              <button class="btn btn-sm btn-secondary" onclick="nijjaraERP.loadPage(${
+                pagination.currentPage - 1
+              })" style="margin-left: 0.5rem;">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            `;
+          }
+
+          // Page numbers (show max 5 pages)
+          const startPage = Math.max(1, pagination.currentPage - 2);
+          const endPage = Math.min(
+            pagination.totalPages,
+            pagination.currentPage + 2
+          );
+
+          for (let i = startPage; i <= endPage; i++) {
+            const activeClass =
+              i === pagination.currentPage ? "btn-primary" : "btn-secondary";
+            paginationHTML += `
+              <button class="btn btn-sm ${activeClass}" onclick="nijjaraERP.loadPage(${i})" style="margin-left: 0.25rem;">
+                ${i}
+              </button>
+            `;
+          }
+
+          // Next button
+          if (pagination.currentPage < pagination.totalPages) {
+            paginationHTML += `
+              <button class="btn btn-sm btn-secondary" onclick="nijjaraERP.loadPage(${
+                pagination.currentPage + 1
+              })" style="margin-left: 0.5rem;">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            `;
+          }
+
+          paginationHTML += `</div></div>`;
+          return paginationHTML;
+        }
+
+        viewRecord(moduleType, recordIndex) {
+          this.showNotification(
+            "قيد التطوير",
+            "عرض تفاصيل السجل قيد التطوير",
+            "info"
+          );
+        }
+
+        editRecord(moduleType, recordIndex) {
+          this.showNotification(
+            "قيد التطوير",
+            "تعديل السجل قيد التطوير",
+            "info"
+          );
+        }
+
+        deleteRecord(moduleType, recordIndex) {
+          if (confirm("هل أنت متأكد من حذف هذا السجل؟")) {
+            this.showNotification(
+              "قيد التطوير",
+              "حذف السجل قيد التطوير",
+              "info"
+            );
+          }
+        }
+
+        loadPage(pageNumber) {
+          this.showNotification(
+            "قيد التطوير",
+            "التنقل بين الصفحات قيد التطوير",
+            "info"
+          );
+        }
+
+        async showEmployeeForm() {
+          await this.showDynamicForm("FORM_HRM_AddEmployee", "إضافة موظف جديد");
+        }
+
+        async showDynamicForm(formId, title) {
+          try {
+            this.showLoading();
+
+            // Get form configuration from bootstrap data
+            if (!this.bootstrap || !this.bootstrap.forms) {
+              throw new Error("Form configuration not loaded");
+            }
+
+            const formFields = this.bootstrap.forms.filter(
+              (field) => field.FORM_ID === formId
+            );
+            if (formFields.length === 0) {
+              throw new Error("Form not found: " + formId);
+            }
+
+            // Generate form HTML
+            const formHtml = this.generateFormHtml(formFields, formId);
+
+            this.showModal(title, formHtml);
+
+            // Initialize form interactions
+            this.initializeFormInteractions(formId, formFields);
+          } catch (error) {
+            console.error("Error showing dynamic form:", error);
+            this.showNotification("خطأ", "فشل في تحميل النموذج", "error");
+          } finally {
+            this.hideLoading();
+          }
+        }
+
+        generateFormHtml(formFields, formId) {
+          // Group fields by TAB_Section
+          const tabs = {};
+          formFields.forEach((field) => {
+            const section = field.TAB_Section || "Main";
+            if (!tabs[section]) {
+              tabs[section] = [];
+            }
+            tabs[section].push(field);
+          });
+
+          let formHtml = `<form id="dynamicForm_${formId}" class="form-container">`;
+
+          // Generate tabs if multiple sections
+          const tabKeys = Object.keys(tabs);
+          if (tabKeys.length > 1) {
+            formHtml += `<div class="form-tabs">`;
+            tabKeys.forEach((tabName, index) => {
+              const activeClass = index === 0 ? "active" : "";
+              formHtml += `<div class="form-tab ${activeClass}" onclick="nijjaraERP.switchTab('${tabName}')" data-tab="${tabName}">${tabName}</div>`;
+            });
+            formHtml += `</div>`;
+          }
+
+          // Generate form sections
+          tabKeys.forEach((tabName, tabIndex) => {
+            const visibleClass = tabIndex === 0 ? "" : "d-none";
+            formHtml += `<div class="tab-content ${visibleClass}" data-tab-content="${tabName}">`;
+
+            // Create form rows (2 fields per row for better layout)
+            const fields = tabs[tabName];
+            for (let i = 0; i < fields.length; i += 2) {
+              formHtml += `<div class="form-row">`;
+
+              // First field
+              if (fields[i]) {
+                formHtml += this.generateFieldHtml(fields[i]);
+              }
+
+              // Second field if exists
+              if (fields[i + 1]) {
+                formHtml += this.generateFieldHtml(fields[i + 1]);
+              }
+
+              formHtml += `</div>`;
+            }
+
+            formHtml += `</div>`;
+          });
+
+          // Form buttons
+          formHtml += `
+            <div class="form-actions" style="margin-top: 2rem; text-align: left;">
+              <button type="button" class="btn btn-secondary" onclick="nijjaraERP.closeModal()">إلغاء</button>
+              <button type="button" class="btn btn-primary" onclick="nijjaraERP.saveForm('${formId}')" style="margin-right: 1rem;">حفظ</button>
+            </div>
+          `;
+
+          formHtml += `</form>`;
+          return formHtml;
+        }
+
+        generateFieldHtml(field) {
+          const fieldId = `field_${field.Column_Pointer}`;
+          const isRequired = field.Smart_State === "EDITABLE";
+          const isReadOnly = field.Smart_State === "READ_ONLY";
+
+          let fieldHtml = `<div class="form-group">`;
+
+          // Get Arabic label from sheet header (Row 2) - for now use Column_Pointer as label
+          const label =
+            this.getFieldLabel(field.Column_Pointer) || field.Column_Pointer;
+
+          fieldHtml += `<label class="form-label" for="${fieldId}">
+            ${label} ${
+            isRequired ? '<span style="color: var(--danger);">*</span>' : ""
+          }
+          </label>`;
+
+          // Generate input based on Field_Type
+          switch (field.Field_Type) {
+            case "Text":
+              fieldHtml += `<input type="text" id="${fieldId}" class="form-input" ${
+                isReadOnly ? "readonly" : ""
+              } />`;
+              break;
+
+            case "Number":
+              fieldHtml += `<input type="number" id="${fieldId}" class="form-input" ${
+                isReadOnly ? "readonly" : ""
+              } />`;
+              break;
+
+            case "Date":
+              fieldHtml += `<input type="date" id="${fieldId}" class="form-input" ${
+                isReadOnly ? "readonly" : ""
+              } />`;
+              break;
+
+            case "Email":
+              fieldHtml += `<input type="email" id="${fieldId}" class="form-input" ${
+                isReadOnly ? "readonly" : ""
+              } />`;
+              break;
+
+            case "Password":
+              fieldHtml += `<input type="password" id="${fieldId}" class="form-input" ${
+                isReadOnly ? "readonly" : ""
+              } />`;
+              break;
+
+            case "Dropdown":
+              fieldHtml += this.generateDropdownHtml(
+                fieldId,
+                field.DYN_Link,
+                isReadOnly
+              );
+              break;
+
+            case "Smart_Lookup":
+              fieldHtml += this.generateSmartLookupHtml(
+                fieldId,
+                field.DYN_Link,
+                isReadOnly
+              );
+              break;
+
+            default:
+              fieldHtml += `<input type="text" id="${fieldId}" class="form-input" ${
+                isReadOnly ? "readonly" : ""
+              } />`;
+          }
+
+          fieldHtml += `</div>`;
+          return fieldHtml;
+        }
+
+        generateDropdownHtml(fieldId, dynLink, isReadOnly) {
+          if (isReadOnly) {
+            return `<input type="text" id="${fieldId}" class="form-input" readonly />`;
+          }
+
+          let options = '<option value="">-- اختر --</option>';
+
+          // Get options from bootstrap dropdowns
+          if (
+            this.bootstrap &&
+            this.bootstrap.dropdowns &&
+            this.bootstrap.dropdowns[dynLink]
+          ) {
+            const dropdownOptions = this.bootstrap.dropdowns[dynLink];
+            dropdownOptions.forEach((option) => {
+              if (option.DD_Is_Active === "TRUE") {
+                options += `<option value="${option.DD_EN}">${option.DD_AR}</option>`;
+              }
+            });
+          }
+
+          return `<select id="${fieldId}" class="form-input">${options}</select>`;
+        }
+
+        generateSmartLookupHtml(fieldId, dynLink, isReadOnly) {
+          if (isReadOnly) {
+            return `<input type="text" id="${fieldId}" class="form-input" readonly />`;
+          }
+
+          return `
+            <div class="smart-lookup-container">
+              <input type="text" id="${fieldId}" class="form-input" placeholder="ابحث..." 
+                     onkeyup="nijjaraERP.performSmartSearch('${fieldId}', '${dynLink}', this.value)" />
+              <div id="${fieldId}_results" class="smart-lookup-results" style="display: none;"></div>
+            </div>
+          `;
+        }
+
+        getFieldLabel(columnPointer) {
+          // This would normally come from the sheet's Row 2 headers
+          // For now, return a mapped Arabic label or the column name
+          const labelMap = {
+            EMP_Name_AR: "الاسم بالعربية",
+            EMP_Name_EN: "الاسم بالإنجليزية",
+            EMP_Mob_Main: "رقم الجوال",
+            Job_Title: "المسمى الوظيفي",
+            DEPT_Name: "القسم",
+            Hire_Date: "تاريخ التعيين",
+            Basic_Salary: "الراتب الأساسي",
+            PRJ_Name: "اسم المشروع",
+            PRJ_Budget: "الميزانية",
+            CLI_Name: "اسم العميل",
+            USR_Name: "اسم المستخدم",
+            EMP_Email: "البريد الإلكتروني",
+          };
+
+          return labelMap[columnPointer] || columnPointer;
+        }
+
+        switchTab(tabName) {
+          // Hide all tab contents
+          document.querySelectorAll(".tab-content").forEach((content) => {
+            content.classList.add("d-none");
+          });
+
+          // Show selected tab content
+          const tabContent = document.querySelector(
+            `[data-tab-content="${tabName}"]`
+          );
+          if (tabContent) {
+            tabContent.classList.remove("d-none");
+          }
+
+          // Update tab active state
+          document.querySelectorAll(".form-tab").forEach((tab) => {
+            tab.classList.remove("active");
+          });
+          const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+          if (activeTab) {
+            activeTab.classList.add("active");
+          }
+        }
+
+        initializeFormInteractions(formId, formFields) {
+          // Add any special form interactions here
+          console.log("Form initialized:", formId, formFields);
+        }
+
+        async performSmartSearch(fieldId, dynLink, searchTerm) {
+          if (searchTerm.length < 2) {
+            const resultsElement = document.getElementById(
+              fieldId + "_results"
+            );
+            if (resultsElement) {
+              resultsElement.style.display = "none";
+            }
+            return;
+          }
+
+          try {
+            const token = localStorage.getItem("nijjara_token");
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "performSmartSearch",
+                token: token,
+                dynLink: dynLink,
+                searchTerm: searchTerm,
+              }),
+            });
+
+            const data = await response.json();
+            if (data.success && data.results) {
+              this.displaySearchResults(fieldId, data.results);
+            }
+          } catch (error) {
+            console.error("Smart search error:", error);
+          }
+        }
+
+        displaySearchResults(fieldId, results) {
+          const resultsDiv = document.getElementById(fieldId + "_results");
+          if (!resultsDiv) {
+            console.warn(
+              "Search results container not found:",
+              fieldId + "_results"
+            );
+            return;
+          }
+
+          if (results.length === 0) {
+            resultsDiv.style.display = "none";
+            return;
+          }
+
+          let resultsHtml = "";
+          results.forEach((result) => {
+            resultsHtml += `
+              <div class="search-result-item" onclick="nijjaraERP.selectSearchResult('${fieldId}', '${result.id}', '${result.label}')">
+                ${result.label}
+              </div>
+            `;
+          });
+
+          resultsDiv.innerHTML = resultsHtml;
+          resultsDiv.style.display = "block";
+        }
+
+        selectSearchResult(fieldId, id, label) {
+          const field = document.getElementById(fieldId);
+          const resultsDiv = document.getElementById(fieldId + "_results");
+
+          if (field) {
+            field.value = label;
+            field.setAttribute("data-selected-id", id);
+          }
+
+          if (resultsDiv) {
+            resultsDiv.style.display = "none";
+          }
+        }
+
+        async saveForm(formId) {
+          try {
+            const formData = this.collectFormData(formId);
+
+            const token = localStorage.getItem("nijjara_token");
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "saveRecord",
+                token: token,
+                formId: formId,
+                data: formData,
+              }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+              this.showNotification("نجح", "تم حفظ البيانات بنجاح", "success");
+              this.closeModal();
+              // Refresh current view if needed
+              if (this.currentView) {
+                this.loadViewData(this.currentView);
+              }
+            } else {
+              this.showNotification(
+                "خطأ",
+                result.message || "فشل في حفظ البيانات",
+                "error"
+              );
+            }
+          } catch (error) {
+            console.error("Save form error:", error);
+            this.showNotification("خطأ", "حدث خطأ أثناء الحفظ", "error");
+          }
+        }
+
+        collectFormData(formId) {
+          const form = document.getElementById(`dynamicForm_${formId}`);
+          const formData = {};
+
+          // Collect all input values
+          form.querySelectorAll("input, select, textarea").forEach((field) => {
+            const fieldName = field.id.replace("field_", "");
+            let value = field.value;
+
+            // For smart lookups, get the selected ID
+            if (field.getAttribute("data-selected-id")) {
+              value = field.getAttribute("data-selected-id");
+            }
+
+            formData[fieldName] = value;
+          });
+
+          return formData;
+        }
+
+        async showProjectForm() {
+          await this.showDynamicForm("FORM_PRJ_AddMain", "إضافة مشروع جديد");
+        }
+
+        async showExpenseForm() {
+          await this.showDynamicForm(
+            "FORM_FIN_AddDirectExpense",
+            "إضافة مصروف مباشر"
+          );
+        }
+
+        async showUserForm() {
+          await this.showDynamicForm("FORM_SYS_AddUser", "إضافة مستخدم جديد");
+        }
+
+        generateModuleSpecificButtons(moduleType, recordIndex) {
+          let buttons = "";
+
+          switch (moduleType) {
+            case "HRM":
+              buttons += `
+                <button class="btn btn-sm" style="background: var(--warning); color: white;" 
+                        onclick="nijjaraERP.executeButtonAction('BTN_Approve_Leave', '${recordIndex}')" title="قبول الإجازة">
+                  <i class="bi bi-check-circle"></i>
+                </button>
+                <button class="btn btn-sm" style="background: var(--danger); color: white;" 
+                        onclick="nijjaraERP.executeButtonAction('BTN_Reject_Leave', '${recordIndex}')" title="رفض الإجازة">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              `;
+              break;
+
+            case "PRJ":
+              buttons += `
+                <button class="btn btn-sm" style="background: var(--success); color: white;" 
+                        onclick="nijjaraERP.executeButtonAction('BTN_PRJ_Start', '${recordIndex}')" title="بدء المشروع">
+                  <i class="bi bi-play-circle"></i>
+                </button>
+                <button class="btn btn-sm" style="background: var(--warning); color: white;" 
+                        onclick="nijjaraERP.executeButtonAction('BTN_PRJ_Hold', '${recordIndex}')" title="تعليق المشروع">
+                  <i class="bi bi-pause-circle"></i>
+                </button>
+              `;
+              break;
+
+            case "FIN":
+              buttons += `
+                <button class="btn btn-sm" style="background: var(--accent); color: white;" 
+                        onclick="nijjaraERP.executeButtonAction('BTN_Print_Invoice', '${recordIndex}')" title="طباعة الفاتورة">
+                  <i class="bi bi-printer"></i>
+                </button>
+              `;
+              break;
+
+            case "SYS":
+              buttons += `
+                <button class="btn btn-sm" style="background: var(--warning); color: white;" 
+                        onclick="nijjaraERP.executeButtonAction('BTN_Reset_Pass', '${recordIndex}')" title="إعادة تعيين كلمة السر">
+                  <i class="bi bi-shield-lock"></i>
+                </button>
+              `;
+              break;
+
+            default:
+              buttons += `
+                <button class="btn btn-sm" style="background: var(--danger); color: white;" 
+                        onclick="nijjaraERP.deleteRecord('${moduleType}', '${recordIndex}')" title="حذف">
+                  <i class="bi bi-trash"></i>
+                </button>
+              `;
+          }
+
+          return buttons;
+        }
+
+        async executeButtonAction(buttonId, recordIndex) {
+          try {
+            const token = localStorage.getItem("nijjara_token");
+
+            // Find button configuration
+            const buttonConfig = this.bootstrap?.buttons?.find(
+              (btn) => btn.BTN_ID === buttonId
+            );
+            if (!buttonConfig) {
+              throw new Error("Button configuration not found: " + buttonId);
+            }
+
+            // Confirm action
+            if (
+              !confirm(
+                `${buttonConfig.BTN_Label}\nهل أنت متأكد من تنفيذ هذا الإجراء؟`
+              )
+            ) {
+              return;
+            }
+
+            this.showLoading();
+
+            const response = await fetch(this.API_BASE, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "executeButtonAction",
+                token: token,
+                buttonId: buttonId,
+                recordIndex: recordIndex,
+                currentView: this.currentView,
+              }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+              this.showNotification(
+                "نجح",
+                buttonConfig.BTN_Label +
+                  " - " +
+                  (result.message || "تم التنفيذ بنجاح"),
+                "success"
+              );
+
+              // Refresh current view
+              if (this.currentView) {
+                this.loadViewData(this.currentView);
+              }
+            } else {
+              this.showNotification(
+                "خطأ",
+                result.message || "فشل في تنفيذ الإجراء",
+                "error"
+              );
+            }
+          } catch (error) {
+            console.error("Button action error:", error);
+            this.showNotification(
+              "خطأ",
+              "حدث خطأ أثناء تنفيذ الإجراء",
+              "error"
+            );
+          } finally {
+            this.hideLoading();
+          }
+        }
+
+        exportData(type) {
+          this.showNotification(
+            "قيد التطوير",
+            "ميزة التصدير قيد التطوير",
+            "info"
+          );
+        }
+
+        logout() {
+          this.showNotification("تسجيل الخروج", "جاري تسجيل الخروج...", "info");
+
+          setTimeout(() => {
+            // Call logout API
+            const token = localStorage.getItem("nijjara_token");
+            if (token) {
+              fetch(this.API_BASE, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  action: "logout",
+                  token: token,
+                }),
+              }).catch((error) => {
+                console.error("Logout API error:", error);
+              });
+            }
+
+            localStorage.removeItem("nijjara_token");
+            localStorage.removeItem("nijjara_user");
+
+            this.currentUser = null;
+
+            document.getElementById("appContainer").classList.remove("active");
+            document.getElementById("sidebar").classList.remove("active");
+
+            setTimeout(() => {
+              document
+                .getElementById("loginContainer")
+                .classList.remove("hidden");
+              const usernameElement = document.getElementById("username");
+              const passwordElement = document.getElementById("password");
+              if (usernameElement) usernameElement.value = "";
+              if (passwordElement) passwordElement.value = "";
+              this.showNotification(
+                "تم تسجيل الخروج",
+                "تم تسجيل الخروج بنجاح",
+                "success"
+              );
+            }, 500);
+          }, 1000);
+        }
+      }
+
+      // Initialize the application when DOM is ready
+      function initializeERP() {
+        try {
+          console.log("🎬 Starting ERP initialization...");
+          
+          const nijjaraERP = new NijjaraERP();
+          
+          // Make it globally accessible for onclick handlers
+          window.nijjaraERP = nijjaraERP;
+          
+          console.log("✅ ERP initialization completed successfully!");
+        } catch (error) {
+          console.error("❌ ERP initialization failed:", error);
+          document.body.innerHTML = `
+            <div style="text-align: center; padding: 3rem; font-family: Cairo, sans-serif; direction: rtl;">
+              <h1 style="color: #dc3545;">خطأ في تهيئة النظام</h1>
+              <p>فشل في تحميل نظام نجارة ERP</p>
+              <p style="color: #6c757d; font-size: 0.9rem;">${error}</p>
+              <button onclick="window.location.reload()" style="padding: 1rem 2rem; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                إعادة تحميل الصفحة
+              </button>
+            </div>
+          `;
+        }
+      }
+
+      // Wait for DOM to be completely ready
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeERP);
+      } else {
+        // DOM is already ready
+        initializeERP();
+      }
+
+      // Add some utility styles dynamically
+      const style = document.createElement("style");
+      style.textContent = `
+            .badge {
+                padding: 0.25rem 0.5rem;
+                border-radius: 6px;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+            .badge.success {
+                background: rgba(16, 185, 129, 0.2);
+                color: #10b981;
+                border: 1px solid rgba(16, 185, 129, 0.3);
+            }
+            .badge.warning {
+                background: rgba(245, 158, 11, 0.2);
+                color: #f59e0b;
+                border: 1px solid rgba(245, 158, 11, 0.3);
+            }
+            .badge.info {
+                background: rgba(102, 126, 234, 0.2);
+                color: #667eea;
+                border: 1px solid rgba(102, 126, 234, 0.3);
+            }
+      .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+      }
+
+      /* ===== DYNAMIC FORMS STYLES ===== */
+      .smart-lookup-container {
+        position: relative;
+      }
+
+      .smart-lookup-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: var(--shadow-md);
+        margin-top: 2px;
+      }
+
+      .search-result-item {
+        padding: 0.75rem;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border);
+        transition: var(--transition-fast);
+        color: var(--text-primary);
+      }
+
+      .search-result-item:hover {
+        background: var(--glass);
+      }
+
+      .search-result-item:last-child {
+        border-bottom: none;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .tab-content {
+        padding: 1rem 0;
+      }
+
+      .form-tab {
+        position: relative;
+        transition: var(--transition-fast);
+      }
+
+      .form-tab:hover {
+        color: var(--text-primary);
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      /* Success states for forms */
+      .form-input.success {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.1);
+      }
+
+      .form-input.error {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .field-error {
+        color: #ef4444;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+      }
+        `;
+      document.head.appendChild(style);
+
+      console.log("🎉 Nijjara ERP System Initialized Successfully!");
+    </script>
+  </body>
 </html>

@@ -1,0 +1,153 @@
+FORM_ID,TAB_Section,Column_Pointer,Field_Type,Smart_State,DYN_Link
+FORM_SYS_AddUser,Account,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_SYS_AddUser,Account,USR_Name,Text,LOCKED_ON_EDIT,
+FORM_SYS_AddUser,Account,EMP_Email,Text,READ_ONLY,
+FORM_SYS_AddUser,Security,Password_Hash,Password,EDITABLE,
+FORM_SYS_AddUser,Security,ROL_ID,Dropdown,EDITABLE,DYN_ROLES
+FORM_SYS_AddRole,Role Info,ROL_Title,Text,EDITABLE,
+FORM_SYS_AddRole,Role Info,ROL_Notes,Text,EDITABLE,
+FORM_SYS_AddDocument,File Info,DOC_Entity,Dropdown,LOCKED_ON_EDIT,DD_Attachment_Entities
+FORM_SYS_AddDocument,File Info,DOC_Label,Text,EDITABLE,
+FORM_SYS_AddDocument,Upload,DOC_Drive_URL,Attachment_Area,EDITABLE,
+FORM_SYS_AddPubHoliday,Main,Pub_Holiday_Name,Text,EDITABLE,
+FORM_SYS_AddPubHoliday,Main,Pub_Holiday_Date,Date,EDITABLE,
+FORM_SYS_ViewUser,Profile,USR_ID,Text,READ_ONLY,
+FORM_SYS_ViewUser,Profile,EMP_Name_EN,Text,READ_ONLY,
+FORM_SYS_ViewUser,Activity Log,AUD_ID,Related_View,READ_ONLY,SYS_Audit_Log
+FORM_SYS_ViewUser,Sessions,SESS_ID,Related_View,READ_ONLY,SYS_Sessions
+FORM_SYS_ViewRole,Info,ROL_Title,Text,READ_ONLY,
+FORM_SYS_ViewRole,Permissions,SRP_ID,Related_View,READ_ONLY,SYS_Role_Permissions
+FORM_HRM_AddDepartment,Main,DEPT_Name,Text,EDITABLE,
+FORM_HRM_AddEmployee,Personal,EMP_Name_AR,Text,EDITABLE,
+FORM_HRM_AddEmployee,Personal,EMP_Name_EN,Text,EDITABLE,
+FORM_HRM_AddEmployee,Personal,EMP_Mob_Main,Text,EDITABLE,
+FORM_HRM_AddEmployee,Job,Job_Title,Dropdown,EDITABLE,DD_Job_Titles
+FORM_HRM_AddEmployee,Job,DEPT_Name,Dropdown,EDITABLE,DYN_DEPTS
+FORM_HRM_AddEmployee,Job,Hire_Date,Date,EDITABLE,
+FORM_HRM_AddEmployee,Financial,Basic_Salary,Number,EDITABLE,
+FORM_HRM_AddAttendance,Entry,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_HRM_AddAttendance,Entry,ATT_Date,Date,EDITABLE,
+FORM_HRM_AddAttendance,Entry,ATT_Check_In,Text,EDITABLE,
+FORM_HRM_AddAttendance,Entry,ATT_Check_Out,Text,EDITABLE,
+FORM_HRM_AddLeave,Request,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_HRM_AddLeave,Request,LV_Type,Dropdown,EDITABLE,DD_Leave_Type
+FORM_HRM_AddLeave,Request,LV_Start_Date,Date,EDITABLE,
+FORM_HRM_AddLeave,Request,LV_End_Date,Date,EDITABLE,
+FORM_HRM_AddAdvance,Request,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_HRM_AddAdvance,Request,ADV_Amnt,Number,EDITABLE,
+FORM_HRM_AddAdvance,Request,ADV_Issue_Date,Date,EDITABLE,
+FORM_HRM_AddOverTime,Entry,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_HRM_AddOverTime,Entry,ATT_Date,Date,EDITABLE,
+FORM_HRM_AddOverTime,Entry,OT_Amnt,Number,EDITABLE,
+FORM_HRM_AddDeduction,Entry,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_HRM_AddDeduction,Entry,DEDCT_Amnt,Number,EDITABLE,
+FORM_HRM_AddDeduction,Entry,DEDCT_Date,Date,EDITABLE,
+FORM_HRM_ViewEmployee,Profile,EMP_Name_AR,Text,READ_ONLY,
+FORM_HRM_ViewEmployee,Profile,Job_Title,Text,READ_ONLY,
+FORM_HRM_ViewEmployee,Attendance,ATT_ID,Related_View,READ_ONLY,HRM_Attendance
+FORM_HRM_ViewEmployee,Leaves,LV_ID,Related_View,READ_ONLY,HRM_Leave
+FORM_HRM_ViewEmployee,Financials,PAY_ID,Related_View,READ_ONLY,FIN_HRM_Payroll
+FORM_HRM_ViewEmployee,Custody,CSTD_ID,Related_View,READ_ONLY,FIN_Custody
+FORM_PRJ_AddMain,Project Info,PRJ_Name,Text,EDITABLE,
+FORM_PRJ_AddMain,Project Info,CLI_ID,Smart_Lookup,EDITABLE,DYN_CLIENTS
+FORM_PRJ_AddMain,Project Info,PRJ_Type,Dropdown,EDITABLE,DD_Project_Type
+FORM_PRJ_AddMain,Planning,Plan_Start_Date,Date,EDITABLE,
+FORM_PRJ_AddMain,Planning,PRJ_Budget,Number,EDITABLE,
+FORM_PRJ_AddClient,Info,CLI_Name,Text,EDITABLE,
+FORM_PRJ_AddClient,Info,CLI_Mob_1,Text,EDITABLE,
+FORM_PRJ_AddClient,Info,CLI_Email,Email,EDITABLE,
+FORM_PRJ_AddTask,Task Info,PRJ_ID,Smart_Lookup,LOCKED_ON_EDIT,DYN_PROJECTS
+FORM_PRJ_AddTask,Task Info,TSK_Name,Text,EDITABLE,
+FORM_PRJ_AddTask,Task Info,TSK_Priority,Dropdown,EDITABLE,DD_Priority
+FORM_PRJ_AddTask,Assignment,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_PRJ_AddMaterial,Item,MAT_Name,Text,EDITABLE,
+FORM_PRJ_AddMaterial,Item,Default_Unit,Dropdown,EDITABLE,DD_Units
+FORM_PRJ_ViewMain,Overview,PRJ_Name,Text,READ_ONLY,
+FORM_PRJ_ViewMain,Overview,PRJ_Budget,Number,READ_ONLY,
+FORM_PRJ_ViewMain,Tasks,TSK_ID,Related_View,READ_ONLY,PRJ_Tasks
+FORM_PRJ_ViewMain,Direct Costs,DiEXP_ID,Related_View,READ_ONLY,FIN_DirectExpenses
+FORM_PRJ_ViewMain,Allocated Costs,ALO_TM_ID,Related_View,READ_ONLY,PRJ_IndirExp_Time_Alloc
+FORM_PRJ_ViewMain,Revenue,REV_ID,Related_View,READ_ONLY,FIN_PRJ_Revenue
+FORM_PRJ_ViewClient,Profile,CLI_Name,Text,READ_ONLY,
+FORM_PRJ_ViewClient,Projects,PRJ_ID,Related_View,READ_ONLY,PRJ_Main
+FORM_FIN_AddDirectExpense,Expense Info,PRJ_ID,Smart_Lookup,EDITABLE,DYN_PROJECTS
+FORM_FIN_AddDirectExpense,Expense Info,DiEXP_Date,Date,EDITABLE,
+FORM_FIN_AddDirectExpense,Details,MAT_ID,Smart_Lookup,EDITABLE,DYN_MATERIALS
+FORM_FIN_AddDirectExpense,Details,DiEXP_Total_VAT_Inc,Number,EDITABLE,
+FORM_FIN_AddDirectExpense,Payment,DiEXP_Pay_Methd,Dropdown,EDITABLE,DD_Payment_Method
+FORM_FIN_AddDirectExpense,Payment,CSTD_ID,Smart_Lookup,EDITABLE,DYN_CUSTODY
+FORM_FIN_AddInDirectExpense_Time,Main,InDiEXP_TM_Catg,Dropdown,EDITABLE,DD_Expense_Category
+FORM_FIN_AddInDirectExpense_Time,Main,InDiEXP_Start,Date,EDITABLE,
+FORM_FIN_AddInDirectExpense_Time,Main,InDiEXP_End,Date,EDITABLE,
+FORM_FIN_AddInDirectExpense_NoTime,Main,InDiEXP_NT_Catg,Dropdown,EDITABLE,DD_Expense_Category
+FORM_FIN_AddInDirectExpense_NoTime,Main,Depreciation_Start_Date,Date,EDITABLE,
+FORM_FIN_AddPRJ_Revenue,Revenue Info,PRJ_ID,Smart_Lookup,EDITABLE,DYN_PROJECTS
+FORM_FIN_AddPRJ_Revenue,Revenue Info,REV_Date,Date,EDITABLE,
+FORM_FIN_AddPRJ_Revenue,Revenue Info,REV_Amnt,Number,EDITABLE,
+FORM_FIN_AddCustody,Info,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_FIN_AddCustody,Info,CSTD_Amnt,Number,EDITABLE,
+FORM_FIN_AddHRM_Payroll,Info,EMP_ID,Smart_Lookup,EDITABLE,DYN_EMPLOYEES
+FORM_FIN_AddHRM_Payroll,Info,PAY_Net_Pay,Number,EDITABLE,
+FORM_FIN_ViewCustody,Details,EMP_Name,Text,READ_ONLY,
+FORM_FIN_ViewCustody,Details,CSTD_Amnt,Number,READ_ONLY,
+FORM_SYS_AddPermission,Main,PRM_Name,Text,EDITABLE,
+FORM_SYS_AddPermission,Main,PRM_Catg,Dropdown,EDITABLE,DD_Permission_Categories
+FORM_SYS_AddPermission,Main,PRM_Notes,Text,EDITABLE,
+FORM_SYS_AddRolePermission,Main,ROL_ID,Dropdown,EDITABLE,DYN_ROLES
+FORM_SYS_AddRolePermission,Main,PRM_ID,Dropdown,EDITABLE,DYN_PERMISSIONS
+FORM_SYS_AddRolePermission,Main,SRP_Scope,Dropdown,EDITABLE,DD_Scopes
+FORM_SYS_AddRolePermission,Main,SRP_Is_Allowed,Dropdown,EDITABLE,DD_Boolean
+FORM_SYS_ViewPermission,Details,PRM_Name,Text,READ_ONLY,
+FORM_SYS_ViewPermission,Details,PRM_Catg,Text,READ_ONLY,
+FORM_SYS_ViewPermission,Details,PRM_Notes,Text,READ_ONLY,
+FORM_SYS_ViewRolePermission,Details,ROL_ID,Text,READ_ONLY,
+FORM_SYS_ViewRolePermission,Details,PRM_ID,Text,READ_ONLY,
+FORM_SYS_ViewRolePermission,Details,SRP_Scope,Text,READ_ONLY,
+FORM_SYS_ViewAuditLog,Log Info,USR_Name,Text,READ_ONLY,
+FORM_SYS_ViewAuditLog,Log Info,USR_Action,Text,READ_ONLY,
+FORM_SYS_ViewAuditLog,Log Info,ACT_Description,Text,READ_ONLY,
+FORM_SYS_ViewAuditLog,Log Info,AUD_Time_Stamp,Text,READ_ONLY,
+FORM_SYS_ViewSession,Session Info,USR_ID,Text,READ_ONLY,
+FORM_SYS_ViewSession,Session Info,SESS_Status,Text,READ_ONLY,
+FORM_SYS_ViewSession,Session Info,SESS_Start_At,Text,READ_ONLY,
+FORM_SYS_ViewDocument,File Info,DOC_Label,Text,READ_ONLY,
+FORM_SYS_ViewDocument,File Info,DOC_Drive_URL,Text,READ_ONLY,
+FORM_SYS_ViewPubHoliday,Info,Pub_Holiday_Name,Text,READ_ONLY,
+FORM_SYS_ViewPubHoliday,Info,Pub_Holiday_Date,Date,READ_ONLY,
+FORM_HRM_ViewDepartment,Info,DEPT_Name,Text,READ_ONLY,
+FORM_HRM_ViewDepartment,Employees,EMP_ID,Related_View,READ_ONLY,HRM_Employees
+FORM_HRM_ViewAttendance,Details,EMP_Name_AR,Text,READ_ONLY,
+FORM_HRM_ViewAttendance,Details,ATT_Date,Date,READ_ONLY,
+FORM_HRM_ViewAttendance,Details,ATT_Status,Text,READ_ONLY,
+FORM_HRM_ViewAttendance,Details,ATT_Check_In,Text,READ_ONLY,
+FORM_HRM_ViewAttendance,Details,ATT_Check_Out,Text,READ_ONLY,
+FORM_HRM_ViewLeave,Request Info,EMP_Name_AR,Text,READ_ONLY,
+FORM_HRM_ViewLeave,Request Info,LV_Type,Text,READ_ONLY,
+FORM_HRM_ViewLeave,Request Info,LV_Start_Date,Date,READ_ONLY,
+FORM_HRM_ViewLeave,Request Info,LV_End_Date,Date,READ_ONLY,
+FORM_HRM_ViewAdvance,Info,EMP_Name_AR,Text,READ_ONLY,
+FORM_HRM_ViewAdvance,Info,ADV_Amnt,Number,READ_ONLY,
+FORM_HRM_ViewAdvance,Info,ADV_Status,Text,READ_ONLY,
+FORM_HRM_ViewOverTime,Info,EMP_Name_AR,Text,READ_ONLY,
+FORM_HRM_ViewOverTime,Info,OT_Amnt,Number,READ_ONLY,
+FORM_HRM_ViewDeduction,Info,EMP_Name_AR,Text,READ_ONLY,
+FORM_HRM_ViewDeduction,Info,DEDCT_Amnt,Number,READ_ONLY,
+FORM_PRJ_ViewTask,Task Info,TSK_Name,Text,READ_ONLY,
+FORM_PRJ_ViewTask,Task Info,TSK_Priority,Text,READ_ONLY,
+FORM_PRJ_ViewTask,Task Info,TSK_Status,Text,READ_ONLY,
+FORM_PRJ_ViewTask,Assigned To,EMP_ID,Text,READ_ONLY,
+FORM_PRJ_ViewMaterial,Item Info,MAT_Name,Text,READ_ONLY,
+FORM_PRJ_ViewMaterial,Item Info,Default_Unit,Text,READ_ONLY,
+FORM_FIN_ViewDirectExpense,Info,PRJ_Name,Text,READ_ONLY,
+FORM_FIN_ViewDirectExpense,Info,DiEXP_Total_VAT_Inc,Number,READ_ONLY,
+FORM_FIN_ViewDirectExpense,Info,DiEXP_Date,Date,READ_ONLY,
+FORM_FIN_ViewInDirectExpense_Time,Info,InDiEXP_TM_Catg,Text,READ_ONLY,
+FORM_FIN_ViewInDirectExpense_Time,Info,InDiEXP_Start,Date,READ_ONLY,
+FORM_FIN_ViewInDirectExpense_Time,Info,InDiEXP_End,Date,READ_ONLY,
+FORM_FIN_ViewInDirectExpense_NoTime,Info,InDiEXP_NT_Catg,Text,READ_ONLY,
+FORM_FIN_ViewInDirectExpense_NoTime,Info,Depreciation_Start_Date,Date,READ_ONLY,
+FORM_FIN_ViewPRJ_Revenue,Info,PRJ_Name,Text,READ_ONLY,
+FORM_FIN_ViewPRJ_Revenue,Info,REV_Amnt,Number,READ_ONLY,
+FORM_FIN_ViewPRJ_Revenue,Info,REV_Date,Date,READ_ONLY,
+FORM_FIN_ViewHRM_Payroll,Info,EMP_Name,Text,READ_ONLY,
+FORM_FIN_ViewHRM_Payroll,Info,PAY_Net_Pay,Number,READ_ONLY,

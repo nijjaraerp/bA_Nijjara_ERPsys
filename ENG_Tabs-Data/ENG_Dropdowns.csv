@@ -1,0 +1,111 @@
+DD_ID,DD_EN,DD_AR,DD_Is_Active,DD_Sort_Order
+DD_YesNo,Yes,نعم,TRUE,1
+DD_YesNo,No,لا,TRUE,2
+DD_Boolean,TRUE,صحيح,TRUE,1
+DD_Boolean,FALSE,خطأ,TRUE,2
+DD_User_Status,Active,نشط,TRUE,1
+DD_User_Status,Inactive,غير نشط,TRUE,2
+DD_Gender,Male,ذكر,TRUE,1
+DD_Gender,Female,أنثى,TRUE,2
+DD_Project_Status,New,جديد,TRUE,1
+DD_Project_Status,Active,جاري التنفيذ,TRUE,2
+DD_Project_Status,Completed,مكتمل,TRUE,3
+DD_Project_Status,On_Hold,معلق,TRUE,4
+DD_Project_Type,Internal,داخلي,TRUE,1
+DD_Project_Type,Client,خارجي,TRUE,2
+DD_Priority,High,عالية,TRUE,1
+DD_Priority,Medium,متوسطة,TRUE,2
+DD_Priority,Low,منخفضة,TRUE,3
+DD_Task_Status,Pending,قيد الانتظار,TRUE,1
+DD_Task_Status,In_Progress,جاري العمل,TRUE,2
+DD_Task_Status,Completed,مكتملة,TRUE,3
+DD_Payment_Method,Cash,نقدية,TRUE,1
+DD_Payment_Method,Bank,تحويل بنكي,TRUE,2
+DD_Payment_Method,Cheque,شيك,TRUE,3
+DD_Payment_Method,Custody,عهدة موظف,TRUE,4
+DD_Payment_Status,Paid,مدفوع,TRUE,1
+DD_Payment_Status,Pending,معلق,TRUE,2
+DD_Expense_Category,Rent,إيجار,TRUE,1
+DD_Expense_Category,Utilities,مرافق,TRUE,2
+DD_Expense_Category,Maintenance,صيانة,TRUE,3
+DD_Expense_Category,Purchases,مشتريات,TRUE,4
+DD_Leave_Type,Annual,سنوية,TRUE,1
+DD_Leave_Type,Sick,مرضية,TRUE,2
+DD_Leave_Type,Unpaid,بدون راتب,TRUE,3
+DD_Job_Titles,Manager,مدير,TRUE,1
+DD_Job_Titles,Engineer,مهندس,TRUE,2
+DD_Job_Titles,Accountant,محاسب,TRUE,3
+DD_Job_Titles,Worker,عامل,TRUE,4
+DD_Units,Piece,قطعة,TRUE,1
+DD_Units,KG,كجم,TRUE,2
+DD_Units,Meter,متر,TRUE,3
+DD_MFA_Status,Enabled,مُفعّل,TRUE,1
+DD_MFA_Status,Disabled,غير مُفعّل,TRUE,2
+DD_Permission_Categories,USERS,المستخدمون,TRUE,1
+DD_Permission_Categories,SECURITY,الأمان,TRUE,2
+DD_Permission_Categories,AUDIT,التدقيق,TRUE,3
+DD_Scopes,GLOBAL,عالمي,TRUE,1
+DD_Scopes,DEPARTMENT,الإدارة,TRUE,2
+DD_Scopes,SELF,ذاتي,TRUE,3
+DD_Scopes,LIMITED,محدود,TRUE,4
+DD_Attachment_Entities,Users,المستخدمون,TRUE,1
+DD_Attachment_Entities,Roles,الأدوار,TRUE,2
+DD_Attachment_Entities,Permissions,الأذونات,TRUE,3
+DD_Attachment_Entities,Role_Permissions,أذونات_الأدوار,TRUE,4
+DD_Export_Formats,CSV,CSV,TRUE,1
+DD_Export_Formats,XLSX,XLSX,TRUE,2
+DD_Export_Formats,JSON,JSON,TRUE,3
+DD_Contract_Types,Full_Time,دوام كامل,TRUE,1
+DD_Contract_Types,Part_Time,دوام جزئي,TRUE,2
+DD_Contract_Types,Contract,عقد,TRUE,3
+DD_Contract_Types,Temporary,مؤقت,TRUE,4
+DD_Contract_Types,Internship,تدريب,TRUE,5
+DD_Cost_Categories,Labor,تكاليف العمالة,TRUE,1
+DD_Cost_Categories,Materials,مواد,TRUE,2
+DD_Cost_Categories,Equipment,معدات,TRUE,3
+DD_Cost_Categories,Misc,أخرى,TRUE,4
+DD_Indirect_Frequency,Monthly,شهري,TRUE,1
+DD_Indirect_Frequency,Quarterly,ربع سنوي,TRUE,2
+DD_Indirect_Frequency,Yearly,سنوي,TRUE,3
+DD_Indirect_Frequency,One-time,مرة واحدة,TRUE,4
+DD_Revenue_Type,Project,مشروع,TRUE,1
+DD_Revenue_Type,General,عام,TRUE,2
+DD_Account,Assets,الأصول,TRUE,1
+DD_Account,Liabilities,الخصوم,TRUE,2
+DD_Account,Equity,حقوق الملكية,TRUE,3
+DD_Account,Revenue,الإيرادات,TRUE,4
+DD_Account,Expenses,المصروفات,TRUE,5
+DD_Account,Cash,النقد,TRUE,6
+DD_Account,Bank,البنك,TRUE,7
+DD_Custody_Status,Open,مفتوحة,TRUE,1
+DD_Custody_Status,Closed,مغلقة,TRUE,2
+DD_Custody_Status,Overdue,متأخرة,TRUE,3
+DD_Marital_Status,Single,أعزب,TRUE,1
+DD_Marital_Status,Married,متزوج,TRUE,2
+DD_Marital_Status,Divorced,مطلق,TRUE,3
+DD_Marital_Status,Widowed,أرمل,TRUE,4
+DD_Military_Status,Completed,أنهى الخدمة,TRUE,1
+DD_Military_Status,Exempted,معفى,TRUE,2
+DD_Military_Status,In_Progress,يؤدي الخدمة,TRUE,3
+DD_Military_Status,Not_Applicable,غير مطلوب,TRUE,4
+DD_Employee_Status,Active,نشط,TRUE,1
+DD_Employee_Status,Probation,تحت التجربة,TRUE,2
+DD_Employee_Status,On_Leave,في إجازة,TRUE,3
+DD_Employee_Status,Terminated,منتهي الخدمة,TRUE,4
+DD_Attendance_Status,Present,حاضر,TRUE,1
+DD_Attendance_Status,Absent,غائب,TRUE,2
+DD_Attendance_Status,Late,متأخر,TRUE,3
+DD_Attendance_Status,On_Leave,في إجازة,TRUE,4
+DD_Attendance_Status,Remote,عمل عن بُعد,TRUE,5
+DD_Leave_Status,Pending,قيد المراجعة,TRUE,1
+DD_Leave_Status,Approved,مقبولة,TRUE,2
+DD_Leave_Status,Rejected,مرفوضة,TRUE,3
+DD_Leave_Status,Cancelled,ملغاة,TRUE,4
+DD_Advance_Status,Pending,قيد الاعتماد,TRUE,1
+DD_Advance_Status,Approved,معتمدة,TRUE,2
+DD_Advance_Status,Disbursed,مصروفة,TRUE,3
+DD_Advance_Status,Settled,مقفلة,TRUE,4
+DD_Payroll_Status,Draft,مسودة,TRUE,1
+DD_Payroll_Status,Submitted,قيد المراجعة,TRUE,2
+DD_Payroll_Status,Approved,معتمد,TRUE,3
+DD_Payroll_Status,Paid,مدفوع,TRUE,4

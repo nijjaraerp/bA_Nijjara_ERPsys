@@ -1,0 +1,28 @@
+VIEW_ID,View_Title,Source_Sheet
+VIEW_SYS_Users,قائمة المستخدمين,SYS_Users
+VIEW_SYS_Roles,قائمة الأدوار,SYS_Roles
+VIEW_SYS_Permissions,قائمة الصلاحيات,SYS_Permissions
+VIEW_SYS_RolePermissions,تعيينات الصلاحيات,SYS_Role_Permissions
+VIEW_SYS_AuditLog,سجل التدقيق,SYS_Audit_Log
+VIEW_SYS_Sessions,جلسات المستخدمين,SYS_Sessions
+VIEW_SYS_Documents,المستندات,SYS_Documents
+VIEW_SYS_PubHolidays,العطلات الرسمية,SYS_PubHolidays
+VIEW_HRM_Departments,الأقسام,HRM_Departments
+VIEW_HRM_Employees,الموظفون,HRM_Employees
+VIEW_HRM_Attendance,سجل الحضور,HRM_Attendance
+VIEW_HRM_Leave,الإجازات,HRM_Leave
+VIEW_HRM_Advances,السلف,HRM_Advances
+VIEW_HRM_OverTime,الوقت الإضافي,HRM_OverTime
+VIEW_HRM_Deductions,الخصومات,HRM_Deductions
+VIEW_PRJ_Main,المشاريع,PRJ_Main
+VIEW_PRJ_Clients,العملاء,PRJ_Clients
+VIEW_PRJ_Tasks,مهام المشاريع,PRJ_Tasks
+VIEW_PRJ_Material,المواد والخامات,PRJ_Material
+VIEW_FIN_DirectExpenses,المصروفات المباشرة,FIN_DirectExpenses
+VIEW_FIN_InDirectExpenses_Time,مصروفات (زمنية),FIN_InDirectExpenses_Time
+VIEW_FIN_InDirectExpenses_NoTime,مصروفات (ثابتة),FIN_InDirectExpenses_NoTime
+VIEW_FIN_PRJ_Revenue,إيرادات المشاريع,FIN_PRJ_Revenue
+VIEW_FIN_Custody,العهد المالية,FIN_Custody
+VIEW_FIN_HRM_Payroll,مسير الرواتب,FIN_HRM_Payroll
+VIEW_SYS_Documents,المستندات,SYS_Documents
+VIEW_SYS_PubHolidays,العطلات الرسمية,SYS_PubHolidays

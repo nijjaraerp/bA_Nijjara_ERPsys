@@ -1,0 +1,45 @@
+Setting_Key,Setting_Value,Description_EN,Updated_By,Updated_At
+FORM_MASTER:FORM_SYS_AddUser,SYS_Users,Add User,,
+FORM_MASTER:FORM_SYS_AddRole,SYS_Roles,Add Role,,
+FORM_MASTER:FORM_SYS_AddPermission,SYS_Permissions,Add Perm,,
+FORM_MASTER:FORM_SYS_AddRolePermission,SYS_Role_Permissions,Add Role Perm,,
+FORM_MASTER:FORM_SYS_AddDocument,SYS_Documents,Upload Doc,,
+FORM_MASTER:FORM_SYS_AddPubHoliday,SYS_PubHolidays,Add Holiday,,
+FORM_MASTER:FORM_HRM_AddDepartment,HRM_Departments,Add Dept,,
+FORM_MASTER:FORM_HRM_AddEmployee,HRM_Employees,Add Employee,,
+FORM_MASTER:FORM_HRM_AddAttendance,HRM_Attendance,Manual Attendance,,
+FORM_MASTER:FORM_HRM_AddLeave,HRM_Leave,Request Leave,,
+FORM_MASTER:FORM_HRM_AddAdvance,HRM_Advances,Request Advance,,
+FORM_MASTER:FORM_HRM_AddOverTime,HRM_OverTime,Record OT,,
+FORM_MASTER:FORM_HRM_AddDeduction,HRM_Deductions,Record Deduction,,
+FORM_MASTER:FORM_PRJ_AddMain,PRJ_Main,Create Project,,
+FORM_MASTER:FORM_PRJ_AddClient,PRJ_Clients,Add Client,,
+FORM_MASTER:FORM_PRJ_AddTask,PRJ_Tasks,Add Task,,
+FORM_MASTER:FORM_PRJ_AddMaterial,PRJ_Material,Add Material,,
+FORM_MASTER:FORM_FIN_AddDirectExpense,FIN_DirectExpenses,Direct Exp,,
+FORM_MASTER:FORM_FIN_AddInDirectExpense_Time,FIN_InDirectExpenses_Time,Indirect Exp Time,,
+FORM_MASTER:FORM_FIN_AddInDirectExpense_NoTime,FIN_InDirectExpenses_NoTime,Indirect Exp Fixed,,
+FORM_MASTER:FORM_FIN_AddPRJ_Revenue,FIN_PRJ_Revenue,Add Revenue,,
+FORM_MASTER:FORM_FIN_AddCustody,FIN_Custody,Issue Custody,,
+FORM_MASTER:FORM_FIN_AddHRM_Payroll,FIN_HRM_Payroll,Payroll,,
+FORM_MASTER:FORM_SYS_AddPermission,SYS_Permissions,Define Permission,system,12/4/2025
+FORM_MASTER:FORM_SYS_AddRolePermission,SYS_Role_Permissions,Assign Permission,system,12/4/2025
+FORM_MASTER:FORM_SYS_ViewPermission,SYS_Permissions,View Permission,system,12/4/2025
+FORM_MASTER:FORM_SYS_ViewRolePermission,SYS_Role_Permissions,View Role Perm,system,12/4/2025
+FORM_MASTER:FORM_SYS_ViewAuditLog,SYS_Audit_Log,View Log,system,12/4/2025
+FORM_MASTER:FORM_SYS_ViewSession,SYS_Sessions,View Session,system,12/4/2025
+FORM_MASTER:FORM_SYS_ViewDocument,SYS_Documents,View Doc,system,12/4/2025
+FORM_MASTER:FORM_SYS_ViewPubHoliday,SYS_PubHolidays,View Holiday,system,12/4/2025
+FORM_MASTER:FORM_HRM_ViewDepartment,HRM_Departments,View Dept,system,12/4/2025
+FORM_MASTER:FORM_HRM_ViewAttendance,HRM_Attendance,View Attendance,system,12/4/2025
+FORM_MASTER:FORM_HRM_ViewLeave,HRM_Leave,View Leave,system,12/4/2025
+FORM_MASTER:FORM_HRM_ViewAdvance,HRM_Advances,View Advance,system,12/4/2025
+FORM_MASTER:FORM_HRM_ViewOverTime,HRM_OverTime,View OT,system,12/4/2025
+FORM_MASTER:FORM_HRM_ViewDeduction,HRM_Deductions,View Deduction,system,12/4/2025
+FORM_MASTER:FORM_PRJ_ViewTask,PRJ_Tasks,View Task,system,12/4/2025
+FORM_MASTER:FORM_PRJ_ViewMaterial,PRJ_Material,View Material,system,12/4/2025
+FORM_MASTER:FORM_FIN_ViewDirectExpense,FIN_DirectExpenses,View Direct Exp,system,12/4/2025
+FORM_MASTER:FORM_FIN_ViewInDirectExpense_Time,FIN_InDirectExpenses_Time,View Indirect Time,system,12/4/2025
+FORM_MASTER:FORM_FIN_ViewInDirectExpense_NoTime,FIN_InDirectExpenses_NoTime,View Indirect NoTime,system,12/4/2025
+FORM_MASTER:FORM_FIN_ViewPRJ_Revenue,FIN_PRJ_Revenue,View Revenue,system,12/4/2025
+FORM_MASTER:FORM_FIN_ViewHRM_Payroll,FIN_HRM_Payroll,View Payroll,system,12/4/2025

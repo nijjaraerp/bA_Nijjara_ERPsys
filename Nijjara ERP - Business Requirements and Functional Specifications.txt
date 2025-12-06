@@ -1,0 +1,253 @@
+# Nijjara ERP: Business Requirements & Functional Specifications
+## Table of Contents
+- 【 CONCEPT 】
+- [1.0 BUSINESS DATA STRUCTURE]
+- [2.0 OPERATING CONTEXT]
+- [3.0 CORE BUSINESS PROCESSES]
+- [4.0 BUSINESS RECORDS & INFORMATION FLOWS]
+- [5.0 REFERENCE LISTS & ACTIONS]
+- [6.0 WALK-THROUGH EXAMPLE]
+- [7.0 OPERATIONAL LOGS & MONITORING]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━
+【 CONCEPT 】
+━━━━━━━━━━━━
+This document describes, in clear business language, what the Nijjara ERP must do for the company. It answers what we expect the system to support day-to-day across four areas:
+- Project Management (PRJ)
+- Finance (FIN)
+- Human Resources (HRM)
+- System Administration (SYS)
+It focuses on business needs, operations, roles, rules, KPIs, integrations, reporting, and the information we manage. No technical implementation details are included.
+============================================================
+1.0 BUSINESS DATA STRUCTURE
+============================================================
+We manage well-defined business records. For each record type, we agree on:
+- A clear, human-readable identifier (e.g., PRJ-1001).
+- The information shown in lists versus what appears in detailed views.
+- The Arabic labels visible to staff.
+- Which fields are mandatory for data quality.
+Records remain stable after go-live. Administrators may adjust labels or what appears in lists without altering the meaning of the records.
+============================================================
+2.0 OPERATING CONTEXT
+============================================================
+- Language: All staff-facing content is Arabic.
+- Access: Staff see only the tools and data relevant to their roles.
+- Usability: Screens are consistent, simple, and support quick data entry and review.
+- Governance: All actions are traceable and auditable.
+============================================================
+3.0 CORE BUSINESS PROCESSES
+============================================================
+The system supports end-to-end business workflows across modules.
+--------------------------------------------------------------------
+# 3.1 Access & Roles
+--------------------------------------------------------------------
+- Staff sign in with their company accounts.
+- Based on role, each person sees their module menus, lists, and actions.
+- Sensitive actions (approvals, payroll, allocations) require appropriate roles.
+--------------------------------------------------------------------
+# 3.2 Human Resources (HRM)
+--------------------------------------------------------------------
+- Departments: Create, update, and list departments with active/inactive status and sort order.
+- Employees: Add and maintain complete employee profiles (personal, job, financial, contact, emergency).
+- Attendance: Record daily check-in/out times, late/early minutes, and overtime minutes.
+- Leave: Request, approve/reject, and record leave with start/end dates and number of days.
+- Advances: Issue, track, and settle employee advances.
+- Overtime: Record overtime entries and associated amounts.
+- Deductions: Record penalties or deductions and link to payroll.
+--------------------------------------------------------------------
+# 3.3 Projects (PRJ)
+--------------------------------------------------------------------
+- Clients: Maintain client records and their contacts.
+- Projects: Create projects with name, client, type/status, budget, planned start, and location.
+- Tasks: Create and assign tasks to employees; track status, dates, and priority.
+- Materials: Maintain a price list and classifications for materials.
+- Plan vs Actual: Track planned versus actual timelines and costs for governance.
+--------------------------------------------------------------------
+# 3.4 Finance (FIN)
+--------------------------------------------------------------------
+- Direct Expenses: Record project-linked purchases and payments with quantities, prices, totals, VAT, notes, and payment status/method.
+- Indirect Expenses (Time-Based): Record time-bound indirect costs; allocate fairly across active projects based on overlapping days.
+- Indirect Expenses (Fixed/Budget-Based): Record fixed indirect costs; allocate fairly based on the relative budgets of active projects.
+- Revenue: Record project revenue with type, source, invoice number, payment status, totals, and remaining amounts.
+- Custody: Track employee custody balances linked to projects and purposes.
+- Payroll: Generate payroll periods and net pay considering salary, overtime, advances, and deductions.
+- Profit & Loss: Summarize revenue and expenses over a period into statements.
+--------------------------------------------------------------------
+# 3.5 System Administration (SYS)
+--------------------------------------------------------------------
+- Users & Roles: Maintain user accounts and roles; define what each role can do.
+- Permissions: Manage granular permissions and link them to roles.
+- Sessions: Track user sessions for accountability.
+- Public Holidays: Maintain a calendar of official holidays.
+- Documents: Link uploaded files to their business records for quick access.
+- Audit Log: Record who did what, when, and on which record.
+--------------------------------------------------------------------
+# 3.6 Business Rules & Decision Logic
+--------------------------------------------------------------------
+- Identifiers: Use sequential, readable IDs with module prefixes (e.g., HRM-1001).
+- Mandatory Data: Certain fields must be completed before saving.
+- Lookups: When choosing an existing person or project, search by name, email, or phone and select the correct record.
+- Allocations (Time-Based): Share an indirect cost across projects in proportion to overlapping days.
+- Allocations (Budget-Based): Share an indirect cost across projects in proportion to their budgets.
+- Approvals: Actions like leave and payroll require designated approvers.
+--------------------------------------------------------------------
+# 3.7 Key Performance Indicators & Success Metrics
+--------------------------------------------------------------------
+- Overall:
+  - Time to complete common actions (login, save, approval).
+  - Percentage of actions blocked correctly due to insufficient permissions.
+  - Percentage of successful saves without validation errors.
+- HRM:
+  - Employee profile completeness.
+  - Attendance compliance (days with valid check-in/out).
+  - Payroll accuracy (net pay matches expected rules).
+- PRJ:
+  - On-time project start rate.
+  - Budget variance from plan.
+  - Task completion by due date.
+- FIN:
+  - Lead time from expense request to posting.
+  - Revenue collection cycle time.
+  - Allocation accuracy versus expected method.
+- SYS:
+  - Audit coverage of actions.
+  - Stability of active sessions.
+--------------------------------------------------------------------
+# 3.8 Reporting & Analytics Needs
+--------------------------------------------------------------------
+- Dashboards per module with Arabic labels.
+- Standard Reports:
+  - HRM: Employee roster, attendance summary, leave history, payroll statements.
+  - PRJ: Project portfolio, plan vs actual, tasks by owner, materials list.
+  - FIN: Direct and indirect expenses, revenue ledger, custody balances, profit & loss statements.
+  - SYS: Audit log extracts, session summaries, role/permission matrices.
+- Filters by date ranges, department, job title, project, and status.
+- Printable and exportable summaries for reviews and governance.
+--------------------------------------------------------------------
+# 3.9 Integrations
+--------------------------------------------------------------------
+- Company Email: Password reset messages, approvals, and alerts.
+- Document Storage: Store and retrieve attachments linked to records.
+- Accounting System: Export financial postings and statements.
+- Analytics/BI: Share data for dashboards and KPIs.
+All integrations must protect data integrity, respect roles, and remain auditable.
+================================================================================
+4.0  >>  BUSINESS RECORDS & INFORMATION FLOWS
+================================================================================
+We maintain the following records. Each record includes essential business information, creator/updater details, and timestamps. Information flows from data entry to review, approval (where applicable), and reporting.
+[ System Administration (SYS) ]
+- Users: Name, username, email, job title, department, status, last login, created/updated by.
+- Roles: Title, notes, whether a role is system-level.
+- Permissions: Name, category, notes, created/updated by.
+- Role Permissions: Role, permission, scope, allowed/blocked, constraints.
+- Sessions: Session type/status, start/end times, IP address, actor.
+- Public Holidays: Date and name.
+- Documents: Linked entity and ID, file name, label, storage link, uploaded by, created at.
+- Audit Log: Actor, action (add/update/delete), description, entity, entity ID, timestamp, scope.
+[ Human Resources (HRM) ]
+- Departments: Name, active status, sort order.
+- Employees: Names (Arabic/English), birth date, gender, nationality, marital/military status, contacts, address, email, job title, department, hire date, contract type, salary, allowances, deductions.
+- Attendance: Date, check-in/out, late/early minutes, overtime minutes, notes, status.
+- Leave: Type, start/end, number of days, approved by, notes.
+- Advances: Issue date, amount, settlement period, notes, status.
+- Overtime: Policy reference, date, minutes, amount.
+- Deductions: Penalty reference, employee, date, amount.
+[ Projects (PRJ) ]
+- Clients: Name, phones, email, created/updated by.
+- Projects (Main): Name, client, status, type, budget, planned start, location, created/updated by.
+- Tasks: Name, priority, assigned employee, plan/start/end dates, status, created/updated by.
+- Materials: Name, category/subcategories, default unit, active status, price list details.
+- Plan vs Actual: Planned and actual dates, number of days, direct expense totals, materials totals.
+- Indirect Expense Allocations (Time & No-Time): Allocation method, amount, project, timestamps.
+[ Finance (FIN) ]
+- Direct Expenses: Project, date, material, unit, price, quantity, totals (VAT excl/inc), payment status/method, notes.
+- Payroll: Employee, period start/end, basic salary, overtime total, advance instalments, deduction total, net pay, status.
+- Indirect Expenses (Time): Category, subcategory, start/end, payment status/method, notes.
+- Indirect Expenses (No-Time): Category, subcategory, useful life (months), depreciation start date, payment status/method, notes.
+- Profit & Loss: Revenue total, direct expenses total, indirect expenses totals, start/end dates.
+- Revenue: Project, date, amount, type, source, payment method, invoice number, payment status, total/remaining.
+============================================================
+5.0 REFERENCE LISTS & ACTIONS
+============================================================
+Reference Lists (Dropdowns): Central list of selectable options such as gender, project status, payment methods, expense categories, and job titles in both Arabic and English, with active flags and sort order.
+Action Screens (Forms): Named screens to add or edit records (e.g., Add User, Add Employee, Add Project, Add Direct Expense, Add Payroll).
+List Screens (Views): Named lists to review records with filters (e.g., Users, Employees, Attendance, Projects, Tasks, Expenses, Revenue, Payroll).
+Action Buttons: Named actions like Save, Approve, Reject, Edit, Deactivate, Mark as Done.
+---
+## Appendix: Approved Screen & List Names
+System Administration (SYS)
+- Forms: Add User, Add Role, Add Permission, Link Role to Permissions, Add Document, Add Public Holiday
+- Lists: Users, Roles, Permissions, Role-Permissions, Audit Log, Sessions, Documents, Public Holidays
+- Details: View User (Profile, Audit Log, Sessions), View Role (Info, Permissions)
+Human Resources (HRM)
+- Forms: Add Department, Add Employee, Add Attendance, Add Leave, Add Advance, Add Overtime, Add Deduction
+- Lists: Departments, Employees (filters: department, title, status), Attendance, Leave, Advances, Overtime, Deductions
+- Details: View Employee (Profile, Attendance Log, Leave History, Financial History, Custody), View Department (Info, Employee List)
+Project Management (PRJ)
+- Forms: Create Project, Add Client, Add Task, Add Material
+- Lists: Projects (Portfolio), Clients, Tasks (filter: my tasks), Materials (Price List)
+- Details: View Project (Overview, Tasks, Financials [Direct/Indirect], Materials), View Client (Info, Project History)
+Finance (FIN)
+- Forms: Add Direct Expense, Add Indirect Expense (Time-Based), Add Indirect Expense (Budget-Based), Add Project Revenue, Add Custody, Add HRM Payroll
+- Lists: Direct Expenses, Indirect Expenses (Time-Based), Indirect Expenses (Budget-Based), Project Revenue, Custody (Employee Balances), HRM Payroll
+- Details: View Direct Expense, View Custody
+**************************************************************************************************************
+============================================================
+6.0 WALK-THROUGH EXAMPLE
+============================================================
+Scenario: HR Officer signs in → Views Employees → Adds New Employee → Saves → Sees Updated List.
+--------------------------------------------------------------------
+6.1 Access
+--------------------------------------------------------------------
+The HR Officer signs in and is shown HR tools and lists appropriate to the role.
+--------------------------------------------------------------------
+6.2 Navigate to Employees
+--------------------------------------------------------------------
+From the HR menu, the officer opens the Employees list and sees key details in Arabic.
+--------------------------------------------------------------------
+6.3 Add New Employee
+--------------------------------------------------------------------
+The officer clicks “إضافة موظف جديد” and a form opens with tabs for basic information, job, and contact.
+--------------------------------------------------------------------
+6.4 Fill Details
+--------------------------------------------------------------------
+Examples: employee name, job title, department, email, mobile, hire date, basic salary.
+--------------------------------------------------------------------
+6.5 Save
+--------------------------------------------------------------------
+The system checks required fields, assigns the next employee ID, saves the record, writes an audit entry, and shows a success message in Arabic.
+--------------------------------------------------------------------
+6.6 List Updates
+--------------------------------------------------------------------
+The Employees list refreshes automatically and shows the new record.
+--------------------------------------------------------------------
+6.7 View & Edit
+--------------------------------------------------------------------
+The officer opens the employee’s details. If permitted, the “تعديل” action appears. Example: update salary with the change recorded in the audit log.
+--------------------------------------------------------------------
+6.8 Sign Out
+--------------------------------------------------------------------
+When finished, the officer signs out and the session ends.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF WALK-THROUGH EXAMPLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+============================================================
+7.0 OPERATIONAL LOGS & MONITORING
+============================================================
+We maintain three logs to support governance and troubleshooting:
+--------------------------------------------------------------------
+# 7.1 Application Log
+--------------------------------------------------------------------
+Records successful events and routine operations with timestamps, user names, actions, and context.
+--------------------------------------------------------------------
+# 7.2 Warning Log
+--------------------------------------------------------------------
+Captures potential issues (validation failures, blocked access attempts, slow operations) to enable proactive attention.
+--------------------------------------------------------------------
+# 7.3 Error Log
+--------------------------------------------------------------------
+Captures critical failures with error details and the action that caused them. This is the first place to inspect when a problem is reported.
+==> Operational Behavior
+----> Trigger: When staff perform actions, the system records key details.
+----> Processing: Actor, action, record type, record ID, and timestamp are captured.
+----> Storage: Each log is maintained for filtering and analysis as needed.
